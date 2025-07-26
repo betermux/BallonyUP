@@ -1,75 +1,56 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MELONIUM MINING</title>
+  <meta charset="UTF-8">
+  <title>Watermelon Spin</title>
   <style>
-    body {
-      font-family: sans-serif;
-      background: linear-gradient(to bottom, #222, #444);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
+    html, body {
       margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #111;
     }
-    h1 {
-      margin-bottom: 10px;
-    }
-    .panel {
-      background: #333;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px #0006;
-      text-align: center;
-    }
-    button {
-      background: #00c853;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-top: 15px;
-    }
-    button:hover {
-      background: #00e676;
+
+    canvas {
+      display: block;
     }
   </style>
 </head>
 <body>
-  <div class="panel">
-    <h1>MELONIUM🍉</h1>
-    <p>Ore: <span id="ore">0.000</span></p>
-    <p>Rate: <span id="rate">0.012</span> / sec</p>
-    <button onclick="upgrade()">Upgrade</button>
-  </div>
+  <canvas id="game"></canvas>
+
   <script>
-    let ore = 0;
-    let miningRate = 0.012;function updateUI() {
-  document.getElementById('ore').textContent = ore.toFixed(3);
-  document.getElementById('rate').textContent = miningRate.toFixed(3);
-}
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
 
-function upgrade() {
-  const cost = Math.floor(miningRate * 100);
-  if (ore >= cost) {
-    ore -= cost;
-    miningRate += 0.01;
-    updateUI();
-  }
-}
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-setInterval(() => {
-  ore += miningRate;
-  updateUI();
-}, 1000);
+    const watermelon = new Image();
+    watermelon.src = './assets/watermelon.png';
 
-updateUI();
+    let rotation = 0;
 
+    watermelon.onload = () => {
+      animate();
+    };
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(rotation);
+      ctx.drawImage(watermelon, -64, -64, 128, 128); // Тарвас 128x128 хэмжээтэй
+      ctx.restore();
+
+      rotation += 0.002; // Аажмаар эргэх
+
+      requestAnimationFrame(animate);
+    }
   </script>
 </body>
 </html>
