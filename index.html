@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Melot Mining</title>
   <style>
     html, body {
@@ -37,34 +37,91 @@
 
     #melotBox {
       position: absolute;
-      top: 20px;
-      left: 20px;
+      top: 15px;
+      left: 15px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 10px 16px;
+      gap: 8px;
+      padding: 6px 10px;
       background: rgba(255, 255, 255, 0.1);
       border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 12px;
-      backdrop-filter: blur(8px);
+      border-radius: 10px;
+      backdrop-filter: blur(6px);
       color: white;
-      font-size: 24px;
+      font-size: 16px;
       font-weight: bold;
       user-select: none;
-      text-shadow: 0 0 5px black;
     }
 
     #melotIcon {
-      width: 32px;
-      height: 32px;
+      width: 20px;
+      height: 20px;
+    }
+
+    #upgradeBtn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid white;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+    }
+
+    #shop {
+      position: absolute;
+      top: 70px;
+      right: 15px;
+      width: 220px;
+      background: rgba(0, 0, 0, 0.75);
+      color: white;
+      border-radius: 10px;
+      padding: 12px;
+      display: none;
+      z-index: 10;
+    }
+
+    .upgrade-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+    }
+
+    .upgrade-item button {
+      background: white;
+      color: black;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <!-- MELOT coin UI -->
+
+  <!-- MELOT box -->
   <div id="melotBox">
     <img src="./assets/melot.png" id="melotIcon" alt="MELOT">
-    <span id="melotAmount">0.000</span>
+    <span id="melotAmount">0</span>
+  </div>
+
+  <!-- Upgrade Button -->
+  <div id="upgradeBtn">⛏ Upgrade</div>
+
+  <!-- Upgrade Shop -->
+  <div id="shop">
+    <div class="upgrade-item">
+      <span>+1/sec</span>
+      <button onclick="buyUpgrade(1)">Buy (10)</button>
+    </div>
+    <div class="upgrade-item">
+      <span>+5/sec</span>
+      <button onclick="buyUpgrade(5)">Buy (40)</button>
+    </div>
   </div>
 
   <div id="clickZone"></div>
@@ -84,14 +141,19 @@
 
     let rotation = 0;
     let melot = 0;
+    let melotPerSecond = 0;
+
+    function updateMelotDisplay() {
+      melotAmountEl.textContent = melot.toString();
+    }
 
     watermelon.onload = () => {
       animate();
     };
 
     clickZone.addEventListener('click', () => {
-      melot += 0.012;
-      melotAmountEl.textContent = melot.toFixed(3);
+      melot += 1;
+      updateMelotDisplay();
     });
 
     function animate() {
@@ -103,12 +165,39 @@
       ctx.save();
       ctx.translate(centerX, centerY);
       ctx.rotate(rotation);
-      ctx.drawImage(watermelon, -96, -96, 192, 192); // 1.5x том watermelon
+      ctx.drawImage(watermelon, -96, -96, 192, 192); // 1.5x том
       ctx.restore();
 
       rotation += 0.0015;
 
       requestAnimationFrame(animate);
+    }
+
+    // Auto mining every second
+    setInterval(() => {
+      if (melotPerSecond > 0) {
+        melot += melotPerSecond;
+        updateMelotDisplay();
+      }
+    }, 1000);
+
+    // Upgrade shop
+    const upgradeBtn = document.getElementById('upgradeBtn');
+    const shop = document.getElementById('shop');
+
+    upgradeBtn.addEventListener('click', () => {
+      shop.style.display = shop.style.display === 'block' ? 'none' : 'block';
+    });
+
+    function buyUpgrade(amount) {
+      let cost = amount === 1 ? 10 : 40;
+      if (melot >= cost) {
+        melot -= cost;
+        melotPerSecond += amount;
+        updateMelotDisplay();
+      } else {
+        alert("Not enough MELOT!");
+      }
     }
   </script>
 </body>
