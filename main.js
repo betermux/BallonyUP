@@ -8,7 +8,6 @@ const gravity = 0.3;
 const friction = 0.98;
 let score = 0;
 
-// Images
 const fruitImg = new Image();
 fruitImg.src = './assets/watermelon.png';
 
@@ -23,14 +22,14 @@ const sliceSound = new Audio('./assets/slice_sound.mp3');
 const fruits = [];
 const halves = [];
 
-// Fruit class
+// Томруулсан радиустай Fruit класс
 class Fruit {
   constructor(x) {
     this.x = x;
     this.y = canvas.height;
-    this.radius = 32;
-    this.vx = (Math.random() - 0.5) * 4;
-    this.vy = -10 - Math.random() * 4;
+    this.radius = 64; // 2x том (өмнө нь 32 байсан)
+    this.vx = (Math.random() - 0.5) * 5;
+    this.vy = -12 - Math.random() * 4;
     this.sliced = false;
   }
 
@@ -42,15 +41,16 @@ class Fruit {
 
   draw() {
     if (!this.sliced) {
-      ctx.drawImage(fruitImg, this.x - this.radius, this.y - this.radius, 64, 64);
+      ctx.drawImage(fruitImg, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
     }
   }
 
   isHit(x1, y1, x2, y2) {
+    // x1,y1 → x2,y2 хоорондын зураас, зүрхний төв ойртсон эсэх шалгана
     const dx = this.x - x1;
     const dy = this.y - y1;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    return dist < this.radius + 20;
+    return dist < this.radius + 30;
   }
 
   slice(angle) {
@@ -69,7 +69,7 @@ class FruitHalf {
     this.x = x;
     this.y = y;
     this.side = side;
-    const speed = 6 + Math.random() * 2;
+    const speed = 7 + Math.random() * 3;
     const direction = angle + (side === 'left' ? -0.5 : 0.5);
     this.vx = Math.cos(direction) * speed;
     this.vy = Math.sin(direction) * speed;
@@ -91,19 +91,19 @@ class FruitHalf {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rotation);
-    ctx.drawImage(this.image, -32, -32, 64, 64);
+    ctx.drawImage(this.image, -64, -64, 128, 128); // 2x том зүсэгдсэн хэсэг
     ctx.restore();
   }
 }
 
-// Spawn fruit
+// Жимс үүсгэгч
 function spawnFruit() {
   const x = 100 + Math.random() * (canvas.width - 200);
   fruits.push(new Fruit(x));
 }
-setInterval(spawnFruit, 1500);
+setInterval(spawnFruit, 1800);
 
-// Slice logic
+// Mouse slice
 let isDragging = false;
 let lastX = 0;
 let lastY = 0;
@@ -134,14 +134,14 @@ canvas.addEventListener('mouseup', () => {
   isDragging = false;
 });
 
-// Draw score
+// Score
 function drawScore() {
   ctx.fillStyle = 'white';
   ctx.font = '24px Arial';
   ctx.fillText('Score: ' + score, 20, 40);
 }
 
-// Main game loop
+// Loop
 function loop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
