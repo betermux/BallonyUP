@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Watermelon Spin</title>
+  <title>Melon Mining</title>
   <style>
     html, body {
       margin: 0;
@@ -14,9 +14,20 @@
     canvas {
       display: block;
     }
+
+    #counter {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 28px;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
+  <div id="counter">Melons: 0</div>
   <canvas id="game"></canvas>
 
   <script>
@@ -30,10 +41,18 @@
     watermelon.src = './assets/watermelon.png';
 
     let rotation = 0;
+    let melonCount = 0;
+
+    const counterEl = document.getElementById('counter');
 
     watermelon.onload = () => {
       animate();
     };
+
+    canvas.addEventListener('click', () => {
+      melonCount += 0.012;
+      counterEl.textContent = 'Melons: ' + melonCount.toFixed(3);
+    });
 
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -44,10 +63,10 @@
       ctx.save();
       ctx.translate(centerX, centerY);
       ctx.rotate(rotation);
-      ctx.drawImage(watermelon, -64, -64, 128, 128); // Тарвас 128x128 хэмжээтэй
+      ctx.drawImage(watermelon, -96, -96, 192, 192); // 1.5x томруулсан (128x1.5 = 192)
       ctx.restore();
 
-      rotation += 0.002; // Аажмаар эргэх
+      rotation += 0.0015; // удаан эргэх
 
       requestAnimationFrame(animate);
     }
