@@ -2,203 +2,112 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Melot Mining</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Melon Mining</title>
   <style>
-    html, body {
+    * {
       margin: 0;
       padding: 0;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-    }
-
-    body {
-      background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1e1e2f);
-      background-size: 400% 400%;
-      animation: gradientBG 20s ease infinite;
-    }
-
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    canvas {
-      display: block;
-      pointer-events: none;
-    }
-
-    #clickZone {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      z-index: 5;
-    }
-
-    #melotBox {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 10px;
-      backdrop-filter: blur(6px);
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
+      box-sizing: border-box;
       user-select: none;
     }
 
-    #melotIcon {
-      width: 20px;
-      height: 20px;
+    body {
+      background: linear-gradient(to bottom, #a5f3fc, #ffffff);
+      overflow: hidden;
+      font-family: sans-serif;
     }
 
-    #upgradeBtn {
+    #gameContainer {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #melon {
       position: absolute;
-      top: 15px;
-      right: 15px;
-      padding: 8px 14px;
-      background: rgba(255,255,255,0.15);
-      border: 1px solid white;
-      border-radius: 8px;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      backdrop-filter: blur(4px);
+      top: 50%;
+      left: 50%;
+      width: 150px;
+      height: 150px;
+      transform: translate(-50%, -50%);
+      animation: spin 6s linear infinite;
+      transition: transform 0.1s;
     }
 
-    #shop {
+    #melon:active {
+      animation: none;
+      transform: translate(-50%, -50%) scale(1.05);
+    }
+
+    @keyframes spin {
+      0%   { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    #melotDisplay {
       position: absolute;
-      top: 70px;
-      right: 15px;
-      width: 220px;
-      background: rgba(0, 0, 0, 0.75);
-      color: white;
-      border-radius: 10px;
-      padding: 12px;
-      display: none;
-      z-index: 10;
-    }
-
-    .upgrade-item {
+      top: 20px;
+      right: 20px;
+      background: rgba(255,255,255,0.8);
+      padding: 8px 12px;
+      border-radius: 12px;
       display: flex;
-      justify-content: space-between;
-      margin: 10px 0;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
-    .upgrade-item button {
-      background: white;
-      color: black;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 4px;
+    #melotDisplay img {
+      width: 24px;
+      height: 24px;
+    }
+
+    #melotAmount {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    #upgradeButton {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 64px;
+      height: 64px;
       cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    #upgradeFrame {
+      position: absolute;
+      bottom: 100px;
+      right: 20px;
+      width: 220px;
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      display: none;
+      animation: pop 0.3s ease forwards;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
     }
   </style>
 </head>
 <body>
-
-  <!-- MELOT box -->
-  <div id="melotBox">
-    <img src="./assets/melot.png" id="melotIcon" alt="MELOT">
-    <span id="melotAmount">0</span>
+  <div id="gameContainer">
+    <img id="melon" src="assets/watermelon.png" />
+    <div id="melotDisplay">
+      <img src="assets/melot.png" />
+      <span id="melotAmount">0</span>
+    </div>
+    <img id="upgradeButton" src="assets/upgrade.png" />
+    <div id="upgradeFrame">Upgrade дэлгэц (удахгүй...) 🍉</div>
   </div>
 
-  <!-- Upgrade Button -->
-  <div id="upgradeBtn">⛏ Upgrade</div>
-
-  <!-- Upgrade Shop -->
-  <div id="shop">
-    <div class="upgrade-item">
-      <span>+1/sec</span>
-      <button onclick="buyUpgrade(1)">Buy (10)</button>
-    </div>
-    <div class="upgrade-item">
-      <span>+5/sec</span>
-      <button onclick="buyUpgrade(5)">Buy (40)</button>
-    </div>
-  </div>
-
-  <div id="clickZone"></div>
-  <canvas id="game"></canvas>
-
-  <script>
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d');
-    const clickZone = document.getElementById('clickZone');
-    const melotAmountEl = document.getElementById('melotAmount');
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const watermelon = new Image();
-    watermelon.src = './assets/watermelon.png';
-
-    let rotation = 0;
-    let melot = 0;
-    let melotPerSecond = 0;
-
-    function updateMelotDisplay() {
-      melotAmountEl.textContent = melot.toString();
-    }
-
-    watermelon.onload = () => {
-      animate();
-    };
-
-    clickZone.addEventListener('click', () => {
-      melot += 1;
-      updateMelotDisplay();
-    });
-
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-
-      ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.rotate(rotation);
-      ctx.drawImage(watermelon, -96, -96, 192, 192); // 1.5x том
-      ctx.restore();
-
-      rotation += 0.0015;
-
-      requestAnimationFrame(animate);
-    }
-
-    // Auto mining every second
-    setInterval(() => {
-      if (melotPerSecond > 0) {
-        melot += melotPerSecond;
-        updateMelotDisplay();
-      }
-    }, 1000);
-
-    // Upgrade shop
-    const upgradeBtn = document.getElementById('upgradeBtn');
-    const shop = document.getElementById('shop');
-
-    upgradeBtn.addEventListener('click', () => {
-      shop.style.display = shop.style.display === 'block' ? 'none' : 'block';
-    });
-
-    function buyUpgrade(amount) {
-      let cost = amount === 1 ? 10 : 40;
-      if (melot >= cost) {
-        melot -= cost;
-        melotPerSecond += amount;
-        updateMelotDisplay();
-      } else {
-        alert("Not enough MELOT!");
-      }
-    }
-  </script>
+  <script src="main.js"></script>
 </body>
 </html>
