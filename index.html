@@ -3,109 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Melon Mining</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      user-select: none;
-    }
-
-    body {
-      background: linear-gradient(to bottom, #a5f3fc, #ffffff);
-      overflow: hidden;
-      font-family: sans-serif;
-    }
-
-    #gameContainer {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-    }
-
-    #melon {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 150px;
-      height: 150px;
-      transform: translate(-50%, -50%);
-      animation: spin 6s linear infinite;
-      transition: transform 0.1s;
-    }
-
-    #melon:active {
-      animation: none;
-      transform: translate(-50%, -50%) scale(1.05);
-    }
-
-    @keyframes spin {
-      0%   { transform: translate(-50%, -50%) rotate(0deg); }
-      100% { transform: translate(-50%, -50%) rotate(360deg); }
-    }
-
-    #melotDisplay {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: rgba(255,255,255,0.8);
-      padding: 8px 12px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    #melotDisplay img {
-      width: 24px;
-      height: 24px;
-    }
-
-    #melotAmount {
-      font-size: 20px;
-      font-weight: bold;
-    }
-
-    #upgradeButton {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      width: 64px;
-      height: 64px;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-
-    #upgradeFrame {
-      position: absolute;
-      bottom: 100px;
-      right: 20px;
-      width: 220px;
-      background: white;
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-      display: none;
-      animation: pop 0.3s ease forwards;
-    }
-
-    @keyframes pop {
-      0% { transform: scale(0); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-  </style>
+  <title>Melonut Mining</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="gameContainer">
-    <img id="melon" src="assets/watermelon.png" />
-    <div id="melotDisplay">
-      <img src="assets/melot.png" />
-      <span id="melotAmount">0</span>
+  <div id="game-container">
+    <div id="melot-counter">
+      <img src="assets/melot.png" alt="MELOT">
+      <span id="melot-amount">0</span>
     </div>
-    <img id="upgradeButton" src="assets/upgrade.png" />
-    <div id="upgradeFrame">Upgrade дэлгэц (удахгүй...) 🍉</div>
+
+    <img id="watermelon" src="assets/watermelon.png" alt="Watermelon" />
+
+    <img id="upgrade-btn" src="assets/upgrade.png" alt="Upgrade">
+
+    <div id="upgrade-popup">
+      <p>Upgrade store coming soon 🍉</p>
+    </div>
+
+    <button id="settings-toggle">⚙️</button>
+    <div id="settings-menu">
+      <label>
+        <input type="checkbox" id="dark-mode-toggle">
+        Dark Mode
+      </label>
+    </div>
   </div>
 
   <script src="main.js"></script>
