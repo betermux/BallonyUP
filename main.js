@@ -93,11 +93,15 @@ class FruitHalf {
   }
 }
 
-canvas.addEventListener('click', () => {
+// Тарвас үүсгэх функц
+function spawnFruit() {
   const x = Math.random() * canvas.width
-  const fruit = new Fruit(x, canvas.height)
+  const fruit = new Fruit(x, canvas.height)  // Canvas-ийн доод талд гарч ирнэ
   fruits.push(fruit)
-})
+}
+
+// Тарвас үүсгэх хугацааг setInterval-аар хийнэ
+setInterval(spawnFruit, 2000)  // 2 секунд тутамд шинэ тарвас үүсгэх
 
 // ✂️ Mouse swipe slice logic
 let isDragging = false
