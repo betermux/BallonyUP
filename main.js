@@ -1,47 +1,82 @@
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const watermelon = new Image();
+watermelon.src = './assets/watermelon.png';
+
+let rotation = 0;
+let isHolding = false;
 let melot = 0;
-const melotDisplay = document.getElementById('melot-amount');
-const watermelon = document.getElementById('watermelon');
+
+const melotCount = document.getElementById('melot-count');
 const upgradeBtn = document.getElementById('upgrade-btn');
-const upgradePopup = document.getElementById('upgrade-popup');
+const upgradeFrame = document.getElementById('upgrade-frame');
 
-const settingsToggle = document.getElementById('settings-toggle');
-const settingsMenu = document.getElementById('settings-menu');
-const darkModeToggle = document.getElementById('dark-mode-toggle');
+// Watermelon position & size
+const wm = {
+  x: canvas.width / 2,
+  y: canvas.height / 2,
+  size: 120, // том биш, тохиромжтой хэмжээнд
+};
 
-// --- Watermelon click
-watermelon.addEventListener('click', () => {
-  melot++;
-  melotDisplay.textContent = melot;
+// Handle resize
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  wm.x = canvas.width / 2;
+  wm.y = canvas.height / 2;
 });
 
-// --- Watermelon hold animation
-let holdTimeout;
-watermelon.addEventListener('mousedown', () => {
-  watermelon.classList.add('hold');
-});
-window.addEventListener('mouseup', () => {
-  watermelon.classList.remove('hold');
-});
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-// --- Upgrade popup
-upgradeBtn.addEventListener('click', () => {
-  upgradePopup.style.display = 'block';
-  setTimeout(() => {
-    upgradePopup.style.display = 'none';
-  }, 1500);
-});
+  // Background animation
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, '#ffecd2');
+  gradient.addColorStop(1, '#fcb69f');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-// --- Settings menu toggle
-settingsToggle.addEventListener('click', () => {
-  settingsMenu.style.display =
-    settingsMenu.style.display === 'block' ? 'none' : 'block';
-});
+  // Watermelon rotation
+  ctx.save();
+  ctx.translate(wm.x, wm.y);
+  ctx.rotate(rotation);
+  ctx.drawImage(watermelon, -wm.size / 2, -wm.size / 2, wm.size, wm.size);
+  ctx.restore();
 
-// --- Dark Mode toggle
-darkModeToggle.addEventListener('change', (e) => {
-  if (e.target.checked) {
-    document.body.classList.add('dark');
-  } else {
-    document.body.classList.remove('dark');
+  requestAnimationFrame(draw);
+}
+draw();
+
+// Click to gain MELOT
+canvas.addEventListener('click', (e) => {
+  const dx = e.clientX - wm.x;
+  const dy = e.clientY - wm.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  if (distance < wm.size / 2) {
+    melot += 1;
+    melotCount.textContent = melot;
   }
+});
+
+// Hold for extra animation
+canvas.addEventListener('mousedown', () => { isHolding = true });
+canvas.addEventListener('mouseup', () => { isHolding = false });
+
+function animateRotation() {
+  if (isHolding) {
+    rotation += 0.01;
+  } else {
+    rotation += 0.003;
+  }
+  requestAnimationFrame(animateRotation);
+}
+animateRotation();
+
+// Upgrade popup toggle
+upgradeBtn.addEventListener('click', () => {
+  upgradeFrame.style.display = upgradeFrame.style.display === 'none' ? 'block' : 'none';
 });
