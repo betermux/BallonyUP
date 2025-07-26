@@ -1,0 +1,75 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>⛏ Mining Game</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: linear-gradient(to bottom, #222, #444);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    .panel {
+      background: #333;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px #0006;
+      text-align: center;
+    }
+    button {
+      background: #00c853;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    button:hover {
+      background: #00e676;
+    }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h1>⛏ Mining Game</h1>
+    <p>Ore: <span id="ore">0.000</span></p>
+    <p>Rate: <span id="rate">0.012</span> / sec</p>
+    <button onclick="upgrade()">Upgrade</button>
+  </div>
+  <script>
+    let ore = 0;
+    let miningRate = 0.012;function updateUI() {
+  document.getElementById('ore').textContent = ore.toFixed(3);
+  document.getElementById('rate').textContent = miningRate.toFixed(3);
+}
+
+function upgrade() {
+  const cost = Math.floor(miningRate * 100);
+  if (ore >= cost) {
+    ore -= cost;
+    miningRate += 0.01;
+    updateUI();
+  }
+}
+
+setInterval(() => {
+  ore += miningRate;
+  updateUI();
+}, 1000);
+
+updateUI();
+
+  </script>
+</body>
+</html>
