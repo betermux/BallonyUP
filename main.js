@@ -1,11 +1,17 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
+
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const gravity = 0.3;
-const friction = 0.99;
 let score = 0;
+const gravity = 0.4;
+const friction = 0.98;
+
+const fruits = [];
+const fruitHalves = [];
+
+const scoreDiv = document.getElementById('score');
 
 const bgImg = new Image();
 bgImg.src = './assets/bg.png';
@@ -21,8 +27,19 @@ fruitHalfRight.src = './assets/watermelon_right.png';
 
 const sliceSound = new Audio('./assets/slice_sound.mp3');
 
-const fruits = [];
-const fruitHalves = [];
+// ⏳ Wait until all images are loaded
+let imagesLoaded = 0;
+const totalImages = 4;
+
+function checkAllLoaded() {
+  imagesLoaded++;
+  if (imagesLoaded === totalImages) startGame();
+}
+
+bgImg.onload = checkAllLoaded;
+fruitImg.onload = checkAllLoaded;
+fruitHalfLeft.onload = checkAllLoaded;
+fruitHalfRight.onload = checkAllLoaded;
 
 class Fruit {
   constructor(x, y) {
@@ -50,7 +67,7 @@ class Fruit {
     const dx = this.x - x1;
     const dy = this.y - y1;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    return distance < this.radius + 30;
+    return distance < this.radius + 20;
   }
 
   slice(angle) {
@@ -62,7 +79,7 @@ class Fruit {
     fruitHalves.push(new FruitHalf(this.x, this.y, angle, 'right'));
 
     score += 10;
-    document.getElementById('score').textContent = `Score: ${score}`;
+    scoreDiv.textContent = 'Score: ' + score;
   }
 }
 
@@ -70,14 +87,13 @@ class FruitHalf {
   constructor(x, y, angle, side) {
     this.x = x;
     this.y = y;
-    const speed = 6 + Math.random() * 3;
+    const speed = 6 + Math.random() * 2;
     const direction = angle + (side === 'left' ? -Math.PI / 2 : Math.PI / 2);
     this.vx = Math.cos(direction) * speed;
     this.vy = Math.sin(direction) * speed;
-    this.side = side;
-    this.image = side === 'left' ? fruitHalfLeft : fruitHalfRight;
     this.rotation = 0;
     this.rotationSpeed = (Math.random() - 0.5) * 0.2;
+    this.image = side === 'left' ? fruitHalfLeft : fruitHalfRight;
   }
 
   update() {
@@ -99,45 +115,10 @@ class FruitHalf {
 }
 
 function spawnFruit() {
-  const x = Math.random() * canvas.width;
-  const fruit = new Fruit(x, canvas.height + 60);
+  const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
+  const fruit = new Fruit(x, canvas.height + 100);
   fruits.push(fruit);
 }
-
-setInterval(spawnFruit, 1500);
-
-// Swipe logic
-let isDragging = false;
-let lastX = 0;
-let lastY = 0;
-
-canvas.addEventListener('touchstart', (e) => {
-  isDragging = true;
-  const touch = e.touches[0];
-  lastX = touch.clientX;
-  lastY = touch.clientY;
-});
-
-canvas.addEventListener('touchmove', (e) => {
-  if (!isDragging) return;
-  const touch = e.touches[0];
-  const currX = touch.clientX;
-  const currY = touch.clientY;
-
-  fruits.forEach(fruit => {
-    if (!fruit.sliced && fruit.isHit(currX, currY, lastX, lastY)) {
-      const angle = Math.atan2(currY - lastY, currX - lastX);
-      fruit.slice(angle);
-    }
-  });
-
-  lastX = currX;
-  lastY = currY;
-});
-
-canvas.addEventListener('touchend', () => {
-  isDragging = false;
-});
 
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -156,4 +137,43 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-gameLoop();
+// 🐭 Touch events for slicing
+let isDragging = false;
+let lastX = 0;
+let lastY = 0;
+
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  isDragging = true;
+  const touch = e.touches[0];
+  lastX = touch.clientX;
+  lastY = touch.clientY;
+});
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (!isDragging) return;
+  const touch = e.touches[0];
+  const currX = touch.clientX;
+  const currY = touch.clientY;
+
+  fruits.forEach(fruit => {
+    if (!fruit.sliced && fruit.isHit(currX, currY, lastX, lastY)) {
+      const angle = Math.atan2(currY - lastY, currX - lastX);
+      fruit.slice(angle);
+    }
+  });
+
+  lastX = currX;
+  lastY = currY;
+});
+
+canvas.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  isDragging = false;
+});
+
+function startGame() {
+  setInterval(spawnFruit, 1500);
+  gameLoop();
+}
