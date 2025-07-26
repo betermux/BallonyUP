@@ -36,7 +36,7 @@ class Fruit {
   }
 
   update() {
-    this.vy += gravity;
+    this.vy += gravity; // Gravity effect
     this.x += this.vx;
     this.y += this.vy;
   }
@@ -51,7 +51,7 @@ class Fruit {
     const dx = this.x - x1;
     const dy = this.y - y1;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    return distance < this.radius + 20;
+    return distance < this.radius + 20; // Hit detection
   }
 
   slice(angle) {
@@ -62,7 +62,7 @@ class Fruit {
     fruitHalves.push(new FruitHalf(this.x, this.y, angle, 'left'));
     fruitHalves.push(new FruitHalf(this.x, this.y, angle, 'right'));
 
-    score += 10;  // Score нэмэх
+    score += 10;  // Increase score on slice
   }
 }
 
@@ -81,8 +81,8 @@ class FruitHalf {
   }
 
   update() {
-    this.vy += gravity;
-    this.vx *= friction;
+    this.vy += gravity; // Apply gravity
+    this.vx *= friction; // Apply friction to movement
     this.vy *= friction;
     this.x += this.vx;
     this.y += this.vy;
@@ -93,22 +93,22 @@ class FruitHalf {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rotation);
-    ctx.drawImage(this.image, -32, -32, 64, 64);
+    ctx.drawImage(this.image, -32, -32, 64, 64); // Draw sliced fruit
     ctx.restore();
   }
 }
 
-// Тарвас үүсгэх функц
+// Function to spawn fruit
 function spawnFruit() {
   const x = Math.random() * canvas.width;
-  const fruit = new Fruit(x, canvas.height);  // Canvas-ийн доод талд гарч ирнэ
+  const fruit = new Fruit(x, -32);  // Fruit starts above the screen
   fruits.push(fruit);
 }
 
-// Тарвас үүсгэх хугацааг setInterval-аар хийнэ
-setInterval(spawnFruit, 2000);  // 2 секунд тутамд шинэ тарвас үүсгэх
+// Set interval to spawn fruit every 2 seconds
+setInterval(spawnFruit, 2000);
 
-// ✂️ Mouse swipe slice logic
+// Swipe slice logic (mouse drag)
 let isDragging = false;
 let lastX = 0;
 let lastY = 0;
@@ -139,7 +139,7 @@ canvas.addEventListener('mouseup', () => {
   isDragging = false;
 });
 
-// Сагс нэмэх функц
+// Draw score on canvas
 function drawScore() {
   ctx.fillStyle = 'white';
   ctx.font = '30px Arial';
@@ -147,8 +147,8 @@ function drawScore() {
 }
 
 function gameLoop() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+  ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height); // Draw background
 
   fruits.forEach(fruit => {
     fruit.update();
@@ -160,8 +160,8 @@ function gameLoop() {
     half.draw();
   });
 
-  drawScore();
-  requestAnimationFrame(gameLoop);
+  drawScore(); // Draw the score
+  requestAnimationFrame(gameLoop); // Loop the game
 }
 
-gameLoop();
+gameLoop(); // Start the game loop
