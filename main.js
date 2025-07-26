@@ -1,35 +1,36 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 const gravity = 0.3;
-const friction = 0.98;
+const friction = 0.99;
 let score = 0;
+
+const bgImg = new Image();
+bgImg.src = './assets/bg.png';
 
 const fruitImg = new Image();
 fruitImg.src = './assets/watermelon.png';
 
-const fruitLeftImg = new Image();
-fruitLeftImg.src = './assets/watermelon_left.png';
+const fruitHalfLeft = new Image();
+fruitHalfLeft.src = './assets/watermelon_left.png';
 
-const fruitRightImg = new Image();
-fruitRightImg.src = './assets/watermelon_right.png';
+const fruitHalfRight = new Image();
+fruitHalfRight.src = './assets/watermelon_right.png';
 
 const sliceSound = new Audio('./assets/slice_sound.mp3');
 
 const fruits = [];
-const halves = [];
+const fruitHalves = [];
 
-// Томруулсан радиустай Fruit класс
 class Fruit {
-  constructor(x) {
+  constructor(x, y) {
     this.x = x;
-    this.y = canvas.height;
-    this.radius = 64; // 2x том (өмнө нь 32 байсан)
+    this.y = y;
+    this.radius = 64;
     this.vx = (Math.random() - 0.5) * 5;
-    this.vy = -12 - Math.random() * 4;
+    this.vy = -10 - Math.random() * 4;
     this.sliced = false;
   }
 
@@ -46,11 +47,10 @@ class Fruit {
   }
 
   isHit(x1, y1, x2, y2) {
-    // x1,y1 → x2,y2 хоорондын зураас, зүрхний төв ойртсон эсэх шалгана
     const dx = this.x - x1;
     const dy = this.y - y1;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    return dist < this.radius + 30;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < this.radius + 30;
   }
 
   slice(angle) {
@@ -58,9 +58,11 @@ class Fruit {
     sliceSound.currentTime = 0;
     sliceSound.play();
 
-    halves.push(new FruitHalf(this.x, this.y, angle, 'left'));
-    halves.push(new FruitHalf(this.x, this.y, angle, 'right'));
+    fruitHalves.push(new FruitHalf(this.x, this.y, angle, 'left'));
+    fruitHalves.push(new FruitHalf(this.x, this.y, angle, 'right'));
+
     score += 10;
+    document.getElementById('score').textContent = `Score: ${score}`;
   }
 }
 
@@ -68,12 +70,12 @@ class FruitHalf {
   constructor(x, y, angle, side) {
     this.x = x;
     this.y = y;
-    this.side = side;
-    const speed = 7 + Math.random() * 3;
-    const direction = angle + (side === 'left' ? -0.5 : 0.5);
+    const speed = 6 + Math.random() * 3;
+    const direction = angle + (side === 'left' ? -Math.PI / 2 : Math.PI / 2);
     this.vx = Math.cos(direction) * speed;
     this.vy = Math.sin(direction) * speed;
-    this.image = side === 'left' ? fruitLeftImg : fruitRightImg;
+    this.side = side;
+    this.image = side === 'left' ? fruitHalfLeft : fruitHalfRight;
     this.rotation = 0;
     this.rotationSpeed = (Math.random() - 0.5) * 0.2;
   }
@@ -91,71 +93,67 @@ class FruitHalf {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rotation);
-    ctx.drawImage(this.image, -64, -64, 128, 128); // 2x том зүсэгдсэн хэсэг
+    ctx.drawImage(this.image, -64, -64, 128, 128);
     ctx.restore();
   }
 }
 
-// Жимс үүсгэгч
 function spawnFruit() {
-  const x = 100 + Math.random() * (canvas.width - 200);
-  fruits.push(new Fruit(x));
+  const x = Math.random() * canvas.width;
+  const fruit = new Fruit(x, canvas.height + 60);
+  fruits.push(fruit);
 }
-setInterval(spawnFruit, 1800);
 
-// Mouse slice
+setInterval(spawnFruit, 1500);
+
+// Swipe logic
 let isDragging = false;
 let lastX = 0;
 let lastY = 0;
 
-canvas.addEventListener('mousedown', (e) => {
+canvas.addEventListener('touchstart', (e) => {
   isDragging = true;
-  lastX = e.offsetX;
-  lastY = e.offsetY;
+  const touch = e.touches[0];
+  lastX = touch.clientX;
+  lastY = touch.clientY;
 });
 
-canvas.addEventListener('mousemove', (e) => {
+canvas.addEventListener('touchmove', (e) => {
   if (!isDragging) return;
-  const currX = e.offsetX;
-  const currY = e.offsetY;
+  const touch = e.touches[0];
+  const currX = touch.clientX;
+  const currY = touch.clientY;
 
-  for (const fruit of fruits) {
+  fruits.forEach(fruit => {
     if (!fruit.sliced && fruit.isHit(currX, currY, lastX, lastY)) {
       const angle = Math.atan2(currY - lastY, currX - lastX);
       fruit.slice(angle);
     }
-  }
+  });
 
   lastX = currX;
   lastY = currY;
 });
 
-canvas.addEventListener('mouseup', () => {
+canvas.addEventListener('touchend', () => {
   isDragging = false;
 });
 
-// Score
-function drawScore() {
-  ctx.fillStyle = 'white';
-  ctx.font = '24px Arial';
-  ctx.fillText('Score: ' + score, 20, 40);
-}
-
-// Loop
-function loop() {
+function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
 
-  fruits.forEach(f => {
-    f.update();
-    f.draw();
+  fruits.forEach(fruit => {
+    fruit.update();
+    fruit.draw();
   });
 
-  halves.forEach(h => {
-    h.update();
-    h.draw();
+  fruitHalves.forEach(half => {
+    half.update();
+    half.draw();
   });
 
-  drawScore();
-  requestAnimationFrame(loop);
+  requestAnimationFrame(gameLoop);
 }
-loop();
+
+gameLoop();
