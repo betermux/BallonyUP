@@ -3,27 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Melonus Slice Game</title>
+  <title>Melonus Slice</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
       overflow: hidden;
-      touch-action: none; /* Touch scroll block */
+      touch-action: none;
       background-color: black;
     }
-
-    canvas {
-      display: block;
-    }
-
     #score {
       position: absolute;
       top: 10px;
-      left: 20px;
+      left: 15px;
       font-size: 24px;
       color: white;
       font-family: Arial, sans-serif;
+      z-index: 1;
+    }
+    canvas {
+      display: block;
     }
   </style>
 </head>
