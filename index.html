@@ -8,11 +8,24 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background: #111;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1e1e2f);
+      background-size: 400% 400%;
+      animation: gradientBG 20s ease infinite;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
 
     canvas {
       display: block;
+      pointer-events: none; /* Prevent unwanted scrolling on mobile */
     }
 
     #counter {
@@ -20,19 +33,30 @@
       top: 20px;
       left: 20px;
       color: white;
-      font-family: Arial, sans-serif;
       font-size: 28px;
+      z-index: 10;
       user-select: none;
+      text-shadow: 0 0 10px black;
+    }
+
+    #clickZone {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 5;
     }
   </style>
 </head>
 <body>
   <div id="counter">Melons: 0</div>
+  <div id="clickZone"></div>
   <canvas id="game"></canvas>
 
   <script>
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
+    const clickZone = document.getElementById('clickZone');
+    const counterEl = document.getElementById('counter');
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -43,13 +67,11 @@
     let rotation = 0;
     let melonCount = 0;
 
-    const counterEl = document.getElementById('counter');
-
     watermelon.onload = () => {
       animate();
     };
 
-    canvas.addEventListener('click', () => {
+    clickZone.addEventListener('click', () => {
       melonCount += 0.012;
       counterEl.textContent = 'Melons: ' + melonCount.toFixed(3);
     });
@@ -63,10 +85,10 @@
       ctx.save();
       ctx.translate(centerX, centerY);
       ctx.rotate(rotation);
-      ctx.drawImage(watermelon, -96, -96, 192, 192); // 1.5x томруулсан (128x1.5 = 192)
+      ctx.drawImage(watermelon, -96, -96, 192, 192); // 1.5x томруулсан
       ctx.restore();
 
-      rotation += 0.0015; // удаан эргэх
+      rotation += 0.0015;
 
       requestAnimationFrame(animate);
     }
