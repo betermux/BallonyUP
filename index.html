@@ -2,36 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Melon Mining Game</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Melon Mining</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="app">
-    <div id="content">
-      <canvas id="gameCanvas"></canvas>
+  <div id="bg-animation" class="bg-home"></div>
 
-      <!-- Background animation layers -->
-      <div id="bg-animation" class="bg-home"></div>
+  <div id="main-content">
+    <img id="watermelon" src="assets/watermelon.png" alt="Watermelon" />
+    
+    <div id="melot-box">
+      <img src="assets/melot.png" class="melot-icon" alt="melot" />
+      <span id="melot-count">0</span>
     </div>
+  </div>
 
-    <nav class="bottom-nav">
-      <button class="nav-btn" onclick="navigateTo('shop')">
-        <img src="assets/shop.png" alt="Shop">
-      </button>
-      <button class="nav-btn" onclick="navigateTo('upgrade')">
-        <img src="assets/upgrade.png" alt="Upgrade">
-      </button>
-      <button class="nav-btn home-btn" onclick="navigateTo('home')">
-        <img src="assets/home.png" alt="Home">
-      </button>
-      <button class="nav-btn" onclick="navigateTo('settings')">
-        <span class="emoji">⚙️</span>
-      </button>
-      <button class="nav-btn" onclick="navigateTo('profile')">
-        <img src="assets/profile.png" alt="Profile">
-      </button>
-    </nav>
+  <div class="bottom-menu">
+    <button class="nav-btn active" onclick="navigateTo('home')"><img src="assets/home.png" alt="Home" /></button>
+    <button class="nav-btn" onclick="navigateTo('shop')"><img src="assets/shop.png" alt="Shop" /></button>
+    <button class="nav-btn" onclick="navigateTo('upgrade')"><img src="assets/upgrade.png" alt="Upgrade" /></button>
+    <button class="nav-btn" onclick="navigateTo('settings')"><span>⚙️</span></button>
+    <button class="nav-btn" onclick="navigateTo('profile')"><img src="assets/profile.png" alt="Profile" /></button>
   </div>
 
   <script type="module" src="main.js"></script>
