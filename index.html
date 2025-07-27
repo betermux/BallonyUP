@@ -2,94 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Melonus Mining</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(to bottom, #ffecd2, #fcb69f);
-      overflow: hidden;
-    }
-
-    canvas {
-      display: block;
-    }
-
-    #melot-counter {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255, 255, 255, 0.8);
-      padding: 8px 14px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      transform: scale(0.8); /* 2x жижиг болгосон */
-    }
-
-    #melot-counter img {
-      width: 24px;
-      height: 24px;
-    }
-
-    #melot-counter span {
-      font-size: 20px;
-      font-weight: bold;
-    }
-
-    #upgrade-btn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      width: 48px;
-      height: 48px;
-      cursor: pointer;
-      transition: transform 0.2s ease;
-    }
-
-    #upgrade-frame {
-      position: absolute;
-      top: 80px;
-      right: 20px;
-      padding: 16px;
-      background: rgba(255,255,255,0.95);
-      border: 2px solid #999;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      display: none;
-      animation: popup 0.3s ease;
-    }
-
-    @keyframes popup {
-      from { transform: scale(0.7); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    #upgrade-frame p {
-      margin: 0;
-      font-weight: bold;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Melon Mining Game</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
-  <div id="melot-counter">
-    <img src="./assets/melot.png" alt="melot">
-    <span id="melot-count">0</span>
-  </div>
-  <img id="upgrade-btn" src="./assets/upgrade.png" alt="upgrade">
-  <div id="upgrade-frame">
-    <p>Upgrade coming soon!</p>
+  <div id="app">
+    <div id="content">
+      <!-- Your main game canvas or content -->
+      <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <nav class="bottom-nav">
+      <button class="nav-btn" onclick="navigateTo('home')">
+        <img src="assets/home.png" alt="Home">
+      </button>
+      <button class="nav-btn" onclick="navigateTo('shop')">
+        <img src="assets/shop.png" alt="Shop">
+      </button>
+      <button class="nav-btn" onclick="navigateTo('upgrade')">
+        <img src="assets/upgrade.png" alt="Upgrade">
+      </button>
+      <button class="nav-btn" onclick="navigateTo('settings')">
+        <span class="emoji">⚙️</span>
+      </button>
+      <button class="nav-btn" onclick="navigateTo('profile')">
+        <img src="assets/profile.png" alt="Profile">
+      </button>
+    </nav>
   </div>
 
-  <script type="module" src="./main.js"></script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>
