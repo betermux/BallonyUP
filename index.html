@@ -9,19 +9,21 @@
 <body>
   <div id="app">
     <div id="content">
-      <!-- Your main game canvas or content -->
       <canvas id="gameCanvas"></canvas>
+
+      <!-- Background animation layers -->
+      <div id="bg-animation" class="bg-home"></div>
     </div>
 
     <nav class="bottom-nav">
-      <button class="nav-btn" onclick="navigateTo('home')">
-        <img src="assets/home.png" alt="Home">
-      </button>
       <button class="nav-btn" onclick="navigateTo('shop')">
         <img src="assets/shop.png" alt="Shop">
       </button>
       <button class="nav-btn" onclick="navigateTo('upgrade')">
         <img src="assets/upgrade.png" alt="Upgrade">
+      </button>
+      <button class="nav-btn home-btn" onclick="navigateTo('home')">
+        <img src="assets/home.png" alt="Home">
       </button>
       <button class="nav-btn" onclick="navigateTo('settings')">
         <span class="emoji">⚙️</span>
