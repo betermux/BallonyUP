@@ -1,0 +1,51 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: #0e0e0e;
+  font-family: sans-serif;
+  overflow: hidden;
+}
+
+#app {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+#gameCanvas {
+  width: 100%;
+  height: calc(100% - 70px);
+  display: block;
+}
+
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 70px;
+  background: rgba(30, 30, 30, 0.95);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-top: 2px solid #222;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.4);
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  outline: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.nav-btn img, .nav-btn .emoji {
+  width: 36px;
+  height: 36px;
+}
+
+.nav-btn .emoji {
+  font-size: 32px;
+  color: white;
+}
