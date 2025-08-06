@@ -49,7 +49,7 @@
     const obstacleImg = new Image();
     obstacleImg.src = "assets/obstacle.png";
 
-    const balloon = {
+    let balloon = {
       x: canvas.width / 2 - 80,
       y: canvas.height - 180,
       width: 160,
@@ -66,32 +66,60 @@
     }
 
     function createObstacle() {
-      const size = 64; // obstacle зурагны хэмжээ
-      const collisionSize = size / 3; // collision box 3x жижиг
+      const size = 80;
       const x = Math.random() * (canvas.width - size);
-      obstacles.push({ x, y: -size, size, speed: 5, collisionSize });
+      obstacles.push({ x, y: -size, width: size, height: size, speed: 5 });
     }
 
     function drawObstacles() {
       for (let obs of obstacles) {
-        ctx.drawImage(obstacleImg, obs.x, obs.y, obs.size, obs.size);
+        ctx.drawImage(obstacleImg, obs.x, obs.y, obs.width, obs.height);
       }
+    }
+
+    function isPixelCollision(x1, y1, img1, x2, y2, img2, width, height) {
+      const buffer = document.createElement("canvas");
+      buffer.width = width;
+      buffer.height = height;
+      const bctx = buffer.getContext("2d");
+
+      // Draw both images
+      bctx.clearRect(0, 0, width, height);
+      bctx.drawImage(img1, x1 - Math.min(x1, x2), y1 - Math.min(y1, y2), width, height);
+      const data1 = bctx.getImageData(0, 0, width, height).data;
+
+      bctx.clearRect(0, 0, width, height);
+      bctx.drawImage(img2, x2 - Math.min(x1, x2), y2 - Math.min(y1, y2), width, height);
+      const data2 = bctx.getImageData(0, 0, width, height).data;
+
+      for (let i = 3; i < data1.length; i += 4) {
+        if (data1[i] > 10 && data2[i] > 10) {
+          return true;
+        }
+      }
+
+      return false;
     }
 
     function updateObstacles() {
       for (let obs of obstacles) {
         obs.y += obs.speed;
 
-        const cx = obs.x + (obs.size - obs.collisionSize) / 2;
-        const cy = obs.y + (obs.size - obs.collisionSize) / 2;
+        const intersectX = Math.max(balloon.x, obs.x);
+        const intersectY = Math.max(balloon.y, obs.y);
+        const intersectWidth = Math.min(balloon.x + balloon.width, obs.x + obs.width) - intersectX;
+        const intersectHeight = Math.min(balloon.y + balloon.height, obs.y + obs.height) - intersectY;
 
-        if (
-          balloon.x < cx + obs.collisionSize &&
-          balloon.x + balloon.width > cx &&
-          balloon.y < cy + obs.collisionSize &&
-          balloon.y + balloon.height > cy
-        ) {
-          gameOver = true;
+        if (intersectWidth > 0 && intersectHeight > 0) {
+          if (
+            isPixelCollision(
+              balloon.x, balloon.y, balloonImg,
+              obs.x, obs.y, obstacleImg,
+              intersectWidth, intersectHeight
+            )
+          ) {
+            gameOver = true;
+          }
         }
       }
 
@@ -136,11 +164,6 @@
       touchStartX = null;
     });
 
-    function moveBalloon() {
-      if (left && balloon.x > 0) balloon.x -= balloon.speed;
-      if (right && balloon.x + balloon.width < canvas.width) balloon.x += balloon.speed;
-    }
-
     function gameLoop() {
       if (gameOver) {
         alert("Game Over! Your Score: " + score);
@@ -159,6 +182,11 @@
       drawScore();
 
       requestAnimationFrame(gameLoop);
+    }
+
+    function moveBalloon() {
+      if (left && balloon.x > 0) balloon.x -= balloon.speed;
+      if (right && balloon.x + balloon.width < canvas.width) balloon.x += balloon.speed;
     }
 
     setInterval(createObstacle, 1200);
