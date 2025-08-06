@@ -220,6 +220,8 @@
     cloudImg.src = 'assets/cloud.png';
     const cloud1Img = new Image();
     cloud1Img.src = 'assets/cloud1.png';
+    const cloud2Img = new Image();
+    cloud2Img.src = 'assets/cloud2.png';
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -241,18 +243,18 @@
 
     // Бөмбөлгийн хөдөлгөөний хувьсагчууд
     let balloonY = canvas.height / 2;
-    const balloonAmplitude = 100; // Дээш доош хөдөлгөөний хэмжээ (2x том)
+    const balloonAmplitude = 10; // Дээш доош хөдөлгөөний хэмжээ (100 -> 10, маш жижиг)
     const balloonFrequency = 0.002; // Хөдөлгөөний хурд
 
     // Дэвсгэрийн хөдөлгөөний хувьсагчууд
     let bgX = 0;
-    const bgSpeed = 25; // Зүүн тийш хөдлөх хурд (50 -> 25, 2x удаан)
+    const bgSpeed = 25; // Зүүн тийш хөдлөх хурд (2x удаан)
 
     // Үүлний хувьсагчууд
     let clouds = [];
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 9; i++) {
       clouds.push({
-        img: i % 2 === 0 ? cloudImg : cloud1Img,
+        img: i % 3 === 0 ? cloudImg : (i % 3 === 1 ? cloud1Img : cloud2Img),
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         size: 50 + Math.random() * 100, // 50-150px хэмжээтэй
@@ -554,7 +556,7 @@
     let imagesLoaded = 0;
     function checkImagesLoaded() {
       imagesLoaded++;
-      if (imagesLoaded === 6) { // bg.png, balloon.png, obstacle.png, coin.png, cloud.png, cloud1.png
+      if (imagesLoaded === 7) { // bg.png, balloon.png, obstacle.png, coin.png, cloud.png, cloud1.png, cloud2.png
         balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
         obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8);
         updateTaskList();
@@ -569,12 +571,14 @@
     coinImg.onload = checkImagesLoaded;
     cloudImg.onload = checkImagesLoaded;
     cloud1Img.onload = checkImagesLoaded;
+    cloud2Img.onload = checkImagesLoaded;
     bgImg.onerror = () => tg.showAlert('Failed to load background image');
     balloonImg.onerror = () => tg.showAlert('Failed to load balloon image');
     obstacleImg.onerror = () => tg.showAlert('Failed to load obstacle image');
     coinImg.onerror = () => tg.showAlert('Failed to load coin image');
     cloudImg.onerror = () => tg.showAlert('Failed to load cloud image');
     cloud1Img.onerror = () => tg.showAlert('Failed to load cloud1 image');
+    cloud2Img.onerror = () => tg.showAlert('Failed to load cloud2 image');
 
     tg.BackButton.onClick(() => {
       tg.HapticFeedback.impactOccurred('medium');
