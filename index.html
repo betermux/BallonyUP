@@ -1,14 +1,125 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Balloon Skydive</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hot Air Balloon Skydive Dodge Game</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #87CEEB;
+    }
+    canvas {
+      display: block;
+    }
+    #restartBox {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,0.9);
+      padding: 10px 20px;
+      border-radius: 10px;
+      display: none;
+      text-align: center;
+      font-family: sans-serif;
+      font-size: 14px;
+    }
+    #restartBox img {
+      width: 40px;
+      height: 40px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-  <div id="score">0 m</div>
   <canvas id="gameCanvas"></canvas>
-  <script src="script.js"></script>
+  <div id="restartBox">
+    <div>Game Over</div>
+    <img src="assets/restart.png" onclick="restartGame()">
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const balloonImg = new Image();
+    balloonImg.src = 'assets/balloon.png';
+
+    const cloudImg = new Image();
+    cloudImg.src = 'assets/cloud.png';
+
+    let balloon = { x: 100, y: canvas.height / 2, width: 60, height: 90 };
+    let clouds = [];
+    let gameOver = false;
+
+    function createCloud() {
+      const y = Math.random() * (canvas.height - 100);
+      clouds.push({ x: canvas.width, y, width: 100, height: 60 });
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
+
+      for (const cloud of clouds) {
+        ctx.drawImage(cloudImg, cloud.x, cloud.y, cloud.width, cloud.height);
+      }
+    }
+
+    function update() {
+      for (const cloud of clouds) {
+        cloud.x -= 3;
+      }
+      clouds = clouds.filter(c => c.x + c.width > 0);
+
+      for (const cloud of clouds) {
+        if (isColliding(balloon, cloud)) {
+          gameOver = true;
+          document.getElementById('restartBox').style.display = 'block';
+        }
+      }
+    }
+
+    function isColliding(a, b) {
+      return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+      );
+    }
+
+    function loop() {
+      if (!gameOver) {
+        draw();
+        update();
+        requestAnimationFrame(loop);
+      }
+    }
+
+    function restartGame() {
+      gameOver = false;
+      balloon.y = canvas.height / 2;
+      clouds = [];
+      document.getElementById('restartBox').style.display = 'none';
+      loop();
+    }
+
+    window.addEventListener('deviceorientation', e => {
+      balloon.y += e.gamma / 2;
+      if (balloon.y < 0) balloon.y = 0;
+      if (balloon.y + balloon.height > canvas.height) balloon.y = canvas.height - balloon.height;
+    });
+
+    setInterval(createCloud, 1500);
+    loop();
+  </script>
 </body>
 </html>
