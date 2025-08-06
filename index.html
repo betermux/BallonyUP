@@ -221,13 +221,15 @@
       lastTime = time;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawBalloon();
-      drawObstacles();
-      drawScore();
+      if (isPlaying) {
+        drawObstacles();
+        drawScore();
+      }
       requestAnimationFrame(gameLoop);
     }
 
     function spawnObstacle() {
-      if (!isPlaying) return; // Зөвхөн тоглоом эхэлсэн үед спавн
+      if (!isPlaying) return;
       const size = 96;
       const x = Math.random() * (canvas.width - size);
       obstacles.push({ x, y: -size, width: size, height: size });
@@ -245,7 +247,7 @@
       document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
       clearInterval(spawnInterval);
       spawnInterval = setInterval(spawnObstacle, 1500);
-      gameLoop();
+      gameLoop(); // Тоглоомын loop эхлүүлэх
     }
 
     canvas.addEventListener('touchmove', function(e) {
