@@ -216,6 +216,10 @@
     obstacleImg.src = 'assets/obstacle.png';
     const coinImg = new Image();
     coinImg.src = 'assets/coin.png';
+    const cloudImg = new Image();
+    cloudImg.src = 'assets/cloud.png';
+    const cloud1Img = new Image();
+    cloud1Img.src = 'assets/cloud1.png';
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -237,13 +241,25 @@
 
     // Бөмбөлгийн хөдөлгөөний хувьсагчууд
     let balloonY = canvas.height / 2;
-    let balloonVelocity = 0;
-    const balloonAmplitude = 50; // Дээш доош хөдөлгөөний хэмжээ
+    const balloonAmplitude = 100; // Дээш доош хөдөлгөөний хэмжээ (2x том)
     const balloonFrequency = 0.002; // Хөдөлгөөний хурд
 
     // Дэвсгэрийн хөдөлгөөний хувьсагчууд
     let bgX = 0;
-    const bgSpeed = 50; // Зүүн тийш хөдлөх хурд (px/s)
+    const bgSpeed = 25; // Зүүн тийш хөдлөх хурд (50 -> 25, 2x удаан)
+
+    // Үүлний хувьсагчууд
+    let clouds = [];
+    for (let i = 0; i < 6; i++) {
+      clouds.push({
+        img: i % 2 === 0 ? cloudImg : cloud1Img,
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: 50 + Math.random() * 100, // 50-150px хэмжээтэй
+        speed: 10 + Math.random() * 20, // 10-30px/s хурд
+        zIndex: Math.random() < 0.5 ? 'front' : 'back' // Наагуур эсвэл цаагуур
+      });
+    }
 
     // Даалгаврын систем
     let tasks = [
@@ -298,6 +314,23 @@
       }
     }
 
+    function drawClouds(deltaTime) {
+      if (!isPlaying) {
+        clouds.forEach(cloud => {
+          // Зүүн тийш хөдлөх
+          cloud.x -= cloud.speed * deltaTime;
+          if (cloud.x <= -cloud.size) {
+            cloud.x = canvas.width; // Баруун талаас дахин гарч ирнэ
+            cloud.y = Math.random() * canvas.height; // Шинэ санамсаргүй байрлал
+          }
+          // Цаагуурх үүлнүүдийг эхлээд зурчихна
+          if (cloud.zIndex === 'back') {
+            ctx.drawImage(cloud.img, cloud.x, cloud.y, cloud.size, cloud.size);
+          }
+        });
+      }
+    }
+
     function drawBalloon(time) {
       if (!isPlaying) {
         // Дээш доош хөдөлгөөнтэй бөмбөлөг
@@ -305,6 +338,17 @@
         ctx.drawImage(balloonImg, canvas.width / 2 - menuBalloonSize / 2, balloonY - menuBalloonSize / 2, menuBalloonSize, menuBalloonSize);
       } else {
         ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
+      }
+    }
+
+    function drawCloudsFront(deltaTime) {
+      if (!isPlaying) {
+        clouds.forEach(cloud => {
+          // Наагуурх үүлнүүдийг бөмбөлгийн дараа зурна
+          if (cloud.zIndex === 'front') {
+            ctx.drawImage(cloud.img, cloud.x, cloud.y, cloud.size, cloud.size);
+          }
+        });
       }
     }
 
@@ -363,10 +407,14 @@
         ctx.fillStyle = '#aee1f9'; // Тоглоомын явцын дэвсгэр өнгө
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       } else {
-        drawBackground(time, deltaTime); // Гол меню дээр хөдлөх дэвсгэр
+        drawBackground(time, deltaTime); // Хөдлөх дэвсгэр
+        drawClouds(deltaTime); // Цаагуурх үүлнүүд
       }
       updateBalloon();
       drawBalloon(time);
+      if (!isPlaying) {
+        drawCloudsFront(deltaTime); // Наагуурх үүлнүүд
+      }
       drawObstacles(deltaTime);
       drawScore();
       requestAnimationFrame(gameLoop);
@@ -506,7 +554,7 @@
     let imagesLoaded = 0;
     function checkImagesLoaded() {
       imagesLoaded++;
-      if (imagesLoaded === 4) { // bg.png, balloon.png, obstacle.png, coin.png
+      if (imagesLoaded === 6) { // bg.png, balloon.png, obstacle.png, coin.png, cloud.png, cloud1.png
         balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
         obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8);
         updateTaskList();
@@ -519,10 +567,14 @@
     balloonImg.onload = checkImagesLoaded;
     obstacleImg.onload = checkImagesLoaded;
     coinImg.onload = checkImagesLoaded;
+    cloudImg.onload = checkImagesLoaded;
+    cloud1Img.onload = checkImagesLoaded;
     bgImg.onerror = () => tg.showAlert('Failed to load background image');
     balloonImg.onerror = () => tg.showAlert('Failed to load balloon image');
     obstacleImg.onerror = () => tg.showAlert('Failed to load obstacle image');
     coinImg.onerror = () => tg.showAlert('Failed to load coin image');
+    cloudImg.onerror = () => tg.showAlert('Failed to load cloud image');
+    cloud1Img.onerror = () => tg.showAlert('Failed to load cloud1 image');
 
     tg.BackButton.onClick(() => {
       tg.HapticFeedback.impactOccurred('medium');
