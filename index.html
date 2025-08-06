@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Бөмбөлөгтэй Тоглоом</title>
+  <title>Balloon Game</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
@@ -97,6 +97,12 @@
       border: none;
       border-radius: 5px;
     }
+    .menu-layer .back-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #ff4444;
+    }
     .menu-layer ul {
       list-style: none;
       padding: 0;
@@ -111,48 +117,35 @@
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
-  <div id="game-over">Тоглоом Дууслаа</div>
+  <div id="game-over">Game Over</div>
   <div class="bottom-menu" id="bottom-menu">
     <div class="menu-button" data-layer="skins-layer"><img src="assets/skins.png" alt="Skins"></div>
-    <div class="menu-button" data-layer="shop-layer"><img src="assets/shop.png" alt="Shop"></div>
     <div class="menu-button play" data-layer="play-layer"><img src="assets/play.png" alt="Play"></div>
     <div class="menu-button" data-layer="tasks-layer"><img src="assets/tasks.png" alt="Tasks"></div>
     <div class="menu-button" data-layer="leaderboard-layer"><img src="assets/leaderboard.png" alt="Leaderboard"></div>
-    <div class="menu-button" data-layer="wallet-layer"><img src="assets/wallet.png" alt="Wallet"></div>
   </div>
   <div id="skins-layer" class="menu-layer">
     <div>
-      <h2>Бөмбөлгийн загвар</h2>
-      <button onclick="buySkin('balloon_red', 50)">Улаан бөмбөлөг (50 токен)</button>
-      <button onclick="buySkin('balloon_blue', 50)">Хөх бөмбөлөг (50 токен)</button>
-      <button>Хаах</button>
+      <h2>Balloon Skins</h2>
+      <button onclick="changeSkin('balloon_red')">Red Balloon</button>
+      <button onclick="changeSkin('balloon_blue')">Blue Balloon</button>
+      <button class="back-button">Back</button>
     </div>
   </div>
-  <div id="shop-layer" class="menu-layer">
-    <div>
-      <h2>Дэлгүүр</h2>
-      <button onclick="buyUpgrade('speed', 100)">Хурд +10% (100 токен)</button>
-      <button>Хаах</button>
-    </div>
-  </div>
-  <div id="play-layer" class="menu-layer">Тоглоомын Цэс (Тоглоом эхлүүлнэ)<button>Хаах</button></div>
+  <div id="play-layer" class="menu-layer">Play Menu (Start Game)<button class="back-button">Back</button></div>
   <div id="tasks-layer" class="menu-layer">
     <div>
-      <h2>Даалгаврууд</h2>
+      <h2>Tasks</h2>
       <ul id="task-list"></ul>
-      <button>Хаах</button>
+      <button class="back-button">Back</button>
     </div>
   </div>
   <div id="leaderboard-layer" class="menu-layer">
     <div>
-      <h2>Шилдэг тоглогчид</h2>
+      <h2>Leaderboard</h2>
       <ul id="leaderboard"></ul>
-      <button>Хаах</button>
+      <button class="back-button">Back</button>
     </div>
-  </div>
-  <div id="wallet-layer" class="menu-layer">
-    <div>Таны хэтэвч: <span id="token-balance">0</span> $BALLOON</div>
-    <button>Хаах</button>
   </div>
 
   <script>
@@ -183,16 +176,15 @@
     let gameOver = false;
     let score = 0;
     let highScore = localStorage.getItem(`highScore_${userId}`) ? parseInt(localStorage.getItem(`highScore_${userId}`)) : 0;
-    let tokens = localStorage.getItem(`tokens_${userId}`) ? parseInt(localStorage.getItem(`tokens_${userId}`)) : 0;
     let lastTime = 0;
     let spawnInterval;
     let isPlaying = false;
-    let upgrades = { speed: 1 };
+    let playCount = localStorage.getItem(`playCount_${userId}`) ? parseInt(localStorage.getItem(`playCount_${userId}`)) : 0;
 
     // Даалгаврын систем
     let tasks = [
-      { id: 'score_1000', description: '1000 оноо цуглуулах', reward: 10, completed: false },
-      { id: 'play_3_times', description: '3 удаа тоглоом тоглох', reward: 5, progress: 0, target: 3 },
+      { id: 'score_1000', description: 'Score 1000 points', reward: 'Unlock Red Skin', completed: false },
+      { id: 'play_3_times', description: 'Play 3 times', reward: 'Unlock Blue Skin', progress: playCount, target: 3, completed: false },
     ];
 
     const menuBalloonSize = 480;
@@ -241,7 +233,7 @@
     function drawObstacles(deltaTime) {
       if (!isPlaying) return;
       for (let obs of obstacles) {
-        obs.y += speed * deltaTime * 60 * upgrades.speed;
+        obs.y += speed * deltaTime * 60;
         ctx.drawImage(obstacleImg, obs.x, obs.y, obs.width, obs.height);
         if (
           checkPixelCollision(
@@ -255,6 +247,9 @@
           isPlaying = false;
           updateTasks();
           saveGameState();
+          // Хожигдох үед Skins цэсийг харуулах
+          document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
+          document.getElementById('skins-layer').style.display = 'flex';
         }
       }
       obstacles = obstacles.filter(obs => obs.y < canvas.height);
@@ -264,14 +259,12 @@
       if (!isPlaying) return;
       ctx.fillStyle = 'black';
       ctx.font = '24px sans-serif';
-      ctx.fillText(`Оноо: ${Math.floor(score)} | Дээд оноо: ${Math.floor(highScore)} | Токен: ${tokens}`, 10, 30);
+      ctx.fillText(`Score: ${Math.floor(score)} | High Score: ${Math.floor(highScore)}`, 10, 30);
       score += 1 / 60;
-      tokens = Math.floor(score / 100); // 100 оноо тутамд 1 токен
       if (score > highScore) {
         highScore = score;
         localStorage.setItem(`highScore_${userId}`, highScore);
       }
-      updateWallet();
     }
 
     function updateBalloon() {
@@ -298,61 +291,34 @@
     }
 
     function saveGameState() {
-      localStorage.setItem(`tokens_${userId}`, tokens);
-      localStorage.setItem(`score_${userId}`, score);
       localStorage.setItem(`highScore_${userId}`, highScore);
+      localStorage.setItem(`playCount_${userId}`, playCount);
       localStorage.setItem(`tasks_${userId}`, JSON.stringify(tasks));
       updateLeaderboard();
     }
 
-    function updateWallet() {
-      document.getElementById('token-balance').textContent = tokens;
+    function changeSkin(skinId) {
+      balloonImg.src = `assets/${skinId}.png`;
+      tg.showAlert(`Skin changed to: ${skinId}`);
       saveGameState();
-    }
-
-    function buySkin(skinId, cost) {
-      if (tokens >= cost) {
-        tokens -= cost;
-        balloonImg.src = `assets/${skinId}.png`;
-        updateWallet();
-        saveGameState();
-        tg.showAlert(`Амжилттай худалдан авлаа: ${skinId}`);
-      } else {
-        tg.showAlert('Хангалттай токен байхгүй!');
-      }
-    }
-
-    function buyUpgrade(type, cost) {
-      if (tokens >= cost) {
-        tokens -= cost;
-        if (type === 'speed') {
-          upgrades.speed += 0.1; // Хурдны сайжруулалт
-        }
-        updateWallet();
-        saveGameState();
-        tg.showAlert(`Амжилттай сайжрууллаа: ${type}`);
-      } else {
-        tg.showAlert('Хангалттай токен байхгүй!');
-      }
     }
 
     function updateTasks() {
       tasks.forEach(task => {
         if (task.id === 'score_1000' && score >= 1000 && !task.completed) {
           task.completed = true;
-          tokens += task.reward;
-          tg.showAlert(`Даалгавар биеллээ: ${task.description}! Шагнал: ${task.reward} токен`);
+          tg.showAlert(`Task completed: ${task.description}! Reward: ${task.reward}`);
         }
         if (task.id === 'play_3_times' && !task.completed) {
-          task.progress = (localStorage.getItem(`playCount_${userId}`) || 0) * 1 + 1;
+          playCount++;
+          task.progress = playCount;
           if (task.progress >= task.target) {
             task.completed = true;
-            tokens += task.reward;
-            tg.showAlert(`Даалгавар биеллээ: ${task.description}! Шагнал: ${task.reward} токен`);
+            tg.showAlert(`Task completed: ${task.description}! Reward: ${task.reward}`);
           }
         }
       });
-      localStorage.setItem(`playCount_${userId}`, tasks.find(t => t.id === 'play_3_times').progress);
+      localStorage.setItem(`playCount_${userId}`, playCount);
       updateTaskList();
       saveGameState();
     }
@@ -362,7 +328,7 @@
       taskList.innerHTML = '';
       tasks.forEach(task => {
         const li = document.createElement('li');
-        li.textContent = `${task.description} - ${task.completed ? 'Биелсэн' : `Явц: ${task.progress || 0}/${task.target || 1}`} (Шагнал: ${task.reward} токен)`;
+        li.textContent = `${task.description} - ${task.completed ? 'Completed' : `Progress: ${task.progress || 0}/${task.target || 1}`} (Reward: ${task.reward})`;
         taskList.appendChild(li);
       });
     }
@@ -428,12 +394,10 @@
       });
     });
 
-    document.querySelectorAll('.menu-layer button').forEach(button => {
-      if (!button.onclick) {
-        button.addEventListener('click', () => {
-          button.parentNode.parentNode.style.display = 'none';
-        });
-      }
+    document.querySelectorAll('.menu-layer .back-button').forEach(button => {
+      button.addEventListener('click', () => {
+        button.parentNode.parentNode.style.display = 'none';
+      });
     });
 
     let imagesLoaded = 0;
@@ -449,8 +413,8 @@
     }
     balloonImg.onload = checkImagesLoaded;
     obstacleImg.onload = checkImagesLoaded;
-    balloonImg.onerror = () => tg.showAlert('Бөмбөлгийн зураг ачааллахад алдаа гарлаа');
-    obstacleImg.onerror = () => tg.showAlert('Саад баригчийн зураг ачааллахад алдаа гарлаа');
+    balloonImg.onerror = () => tg.showAlert('Failed to load balloon image');
+    obstacleImg.onerror = () => tg.showAlert('Failed to load obstacle image');
 
     tg.BackButton.onClick(() => {
       document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
