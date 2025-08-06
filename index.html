@@ -5,16 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Balloon Dodge Game</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       overflow: hidden;
       background: linear-gradient(#87ceeb, #fff);
       font-family: sans-serif;
     }
+
     canvas {
       display: block;
       touch-action: none;
     }
+
     #score {
       position: absolute;
       top: 10px;
@@ -42,14 +49,11 @@
     const obstacleImg = new Image();
     obstacleImg.src = "assets/obstacle.png";
 
-    const offscreen = document.createElement("canvas");
-    const offCtx = offscreen.getContext("2d");
-
-    let balloon = {
-      x: canvas.width / 2 - 40,
-      y: canvas.height - 160,
-      width: 80,
-      height: 80,
+    const balloon = {
+      x: canvas.width / 2 - 80,
+      y: canvas.height - 180,
+      width: 160,
+      height: 160,
       speed: 8
     };
 
@@ -62,9 +66,10 @@
     }
 
     function createObstacle() {
-      const size = 40;
+      const size = 64; // obstacle зурагны хэмжээ
+      const collisionSize = size / 3; // collision box 3x жижиг
       const x = Math.random() * (canvas.width - size);
-      obstacles.push({ x, y: -size, size, speed: 5 });
+      obstacles.push({ x, y: -size, size, speed: 5, collisionSize });
     }
 
     function drawObstacles() {
@@ -73,54 +78,21 @@
       }
     }
 
-    function checkCollision() {
-      for (let obs of obstacles) {
-        const bx = balloon.x, by = balloon.y;
-        const bw = balloon.width, bh = balloon.height;
-        const ox = obs.x, oy = obs.y, os = obs.size;
-
-        // Basic box overlap
-        const isOverlap = (
-          bx < ox + os &&
-          bx + bw > ox &&
-          by < oy + os &&
-          by + bh > oy
-        );
-
-        if (isOverlap) {
-          // pixel-perfect collision
-          offscreen.width = bw;
-          offscreen.height = bh;
-          offCtx.clearRect(0, 0, bw, bh);
-          offCtx.drawImage(balloonImg, 0, 0, bw, bh);
-          const balloonPixels = offCtx.getImageData(0, 0, bw, bh).data;
-
-          const overlapX = Math.max(ox, bx);
-          const overlapY = Math.max(oy, by);
-          const endX = Math.min(ox + os, bx + bw);
-          const endY = Math.min(oy + os, by + bh);
-
-          for (let y = overlapY; y < endY; y++) {
-            for (let x = overlapX; x < endX; x++) {
-              const bxIndex = ((y - by) * bw + (x - bx)) * 4;
-              const alpha = balloonPixels[bxIndex + 3];
-              if (alpha > 30) {
-                return true;
-              }
-            }
-          }
-        }
-      }
-      return false;
-    }
-
     function updateObstacles() {
       for (let obs of obstacles) {
         obs.y += obs.speed;
-      }
 
-      if (checkCollision()) {
-        gameOver = true;
+        const cx = obs.x + (obs.size - obs.collisionSize) / 2;
+        const cy = obs.y + (obs.size - obs.collisionSize) / 2;
+
+        if (
+          balloon.x < cx + obs.collisionSize &&
+          balloon.x + balloon.width > cx &&
+          balloon.y < cy + obs.collisionSize &&
+          balloon.y + balloon.height > cy
+        ) {
+          gameOver = true;
+        }
       }
 
       obstacles = obstacles.filter(obs => obs.y < canvas.height);
@@ -131,6 +103,7 @@
     }
 
     let left = false, right = false;
+
     window.addEventListener("keydown", (e) => {
       if (e.key === "ArrowLeft") left = true;
       if (e.key === "ArrowRight") right = true;
@@ -143,6 +116,7 @@
 
     // Touch control
     let touchStartX = null;
+
     canvas.addEventListener("touchstart", (e) => {
       touchStartX = e.touches[0].clientX;
     });
@@ -153,12 +127,19 @@
       const dx = touchX - touchStartX;
       balloon.x += dx;
       touchStartX = touchX;
+
       if (balloon.x < 0) balloon.x = 0;
       if (balloon.x + balloon.width > canvas.width) balloon.x = canvas.width - balloon.width;
     });
+
     canvas.addEventListener("touchend", () => {
       touchStartX = null;
     });
+
+    function moveBalloon() {
+      if (left && balloon.x > 0) balloon.x -= balloon.speed;
+      if (right && balloon.x + balloon.width < canvas.width) balloon.x += balloon.speed;
+    }
 
     function gameLoop() {
       if (gameOver) {
@@ -168,6 +149,7 @@
       }
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
       moveBalloon();
       drawBalloon();
       drawObstacles();
@@ -177,11 +159,6 @@
       drawScore();
 
       requestAnimationFrame(gameLoop);
-    }
-
-    function moveBalloon() {
-      if (left && balloon.x > 0) balloon.x -= balloon.speed;
-      if (right && balloon.x + balloon.width < canvas.width) balloon.x += balloon.speed;
     }
 
     setInterval(createObstacle, 1200);
