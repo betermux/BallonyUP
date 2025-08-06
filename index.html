@@ -198,7 +198,8 @@
     const obstacleImg = new Image();
     obstacleImg.src = 'assets/obstacle.png';
 
-    let balloon = { x: canvas.width / 2 - 80, y: canvas.height / 2, width: 160, height: 160 };
+    // Balloon болон obstacle-ийн хэмжээг 20% жижиг болгосон
+    let balloon = { x: canvas.width / 2 - 64, y: canvas.height / 2, width: 128, height: 128 }; // 160 * 0.8 = 128
     let obstacles = [];
     let speed = 2;
     let gameOver = false;
@@ -215,7 +216,7 @@
       { id: 'play_3_times', description: 'Play 3 times', reward: 'Unlock Blue Skin', progress: playCount, target: 3, completed: false },
     ];
 
-    const menuBalloonSize = 480;
+    const menuBalloonSize = 384; // Меню дээрх бөмбөлгийн хэмжээг мөн 20% жижиг болгосон (480 * 0.8 = 384)
     let balloonPixelData, obstaclePixelData;
     const offscreenCanvas = document.createElement('canvas');
     const offscreenCtx = offscreenCanvas.getContext('2d');
@@ -275,9 +276,6 @@
           isPlaying = false;
           updateTasks();
           saveGameState();
-          // Skins цэсийг харуулах
-          document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
-          document.getElementById('skins-layer').style.display = 'flex';
         }
       }
       obstacles = obstacles.filter(obs => obs.y < canvas.height);
@@ -314,7 +312,7 @@
     }
 
     function spawnObstacle() {
-      const size = 96;
+      const size = 76.8; // 96 * 0.8 = 76.8 (20% жижиг)
       const x = Math.random() * (canvas.width - size);
       obstacles.push({ x, y: -size, width: size, height: size });
     }
@@ -402,13 +400,15 @@
       if (isPlaying) {
         e.preventDefault();
         let touch = e.touches[0];
-        balloon.x = Math.max(0, Math.min(touch.clientX - balloon.width / 2, canvas.width - balloon.width));
+        // Balloon-ийн хөдөлгөөнийг canvas-ийн дотор хязгаарлах
+        balloon.x = Math.max(10, Math.min(touch.clientX - balloon.width / 2, canvas.width - balloon.width - 10));
       }
     }, { passive: false });
 
     canvas.addEventListener('mousemove', function(e) {
       if (isPlaying) {
-        balloon.x = Math.max(0, Math.min(e.clientX - balloon.width / 2, canvas.width - balloon.width));
+        // Balloon-ийн хөдөлгөөнийг canvas-ийн дотор хязгаарлах
+        balloon.x = Math.max(10, Math.min(e.clientX - balloon.width / 2, canvas.width - balloon.width - 10));
       }
     });
 
@@ -446,7 +446,7 @@
       imagesLoaded++;
       if (imagesLoaded === 2) {
         balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
-        obstaclePixelData = getPixelData(obstacleImg, 96, 96);
+        obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8); // Obstacle-ийн хэмжээг мөн 20% жижиг болгосон
         updateTaskList();
         updateLeaderboard();
         updateWallet();
