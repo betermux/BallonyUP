@@ -42,27 +42,28 @@
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+    const balloonImg = new Image();
+    balloonImg.src = "assets/balloon.png"; // Зургийн зам
+
     let balloon = {
-      x: canvas.width / 2 - 25,
-      y: canvas.height - 150,
-      width: 50,
-      height: 70,
-      speed: 6,
-      img: new Image()
+      x: canvas.width / 2 - 16,
+      y: canvas.height - 100,
+      width: 32,
+      height: 32,
+      speed: 5
     };
-    balloon.img.src = "balloon.png"; // Төслийн assets дотроо balloon.png-г тавина уу
 
     let obstacles = [];
     let score = 0;
     let gameOver = false;
 
     function drawBalloon() {
-      ctx.drawImage(balloon.img, balloon.x, balloon.y, balloon.width, balloon.height);
+      ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
     }
 
     function createObstacle() {
-      const width = Math.random() * 100 + 50;
-      const height = 30;
+      const width = Math.random() * 80 + 40;
+      const height = 20;
       const x = Math.random() * (canvas.width - width);
       obstacles.push({ x, y: -height, width, height, speed: 4 });
     }
@@ -130,7 +131,7 @@
       requestAnimationFrame(gameLoop);
     }
 
-    setInterval(createObstacle, 1000);
+    setInterval(createObstacle, 1200);
     gameLoop();
   </script>
 </body>
