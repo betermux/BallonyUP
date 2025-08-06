@@ -11,7 +11,6 @@
       box-sizing: border-box;
       user-select: none;
     }
-
     html, body {
       width: 100%;
       height: 100%;
@@ -19,14 +18,12 @@
       background: #aee1f9;
       font-family: sans-serif;
     }
-
     canvas {
       position: absolute;
       top: 0;
       left: 0;
       z-index: 1;
     }
-
     .bottom-menu {
       position: fixed;
       bottom: 0;
@@ -39,7 +36,6 @@
       padding: 0 10px;
       z-index: 2;
     }
-
     .menu-button {
       flex: 1;
       height: 100%;
@@ -47,16 +43,13 @@
       justify-content: center;
       align-items: center;
     }
-
     .menu-button img {
       width: 32px;
       height: 32px;
     }
-
     .menu-button.play {
       flex: 1.5;
     }
-
     #game-over {
       position: absolute;
       top: 40%;
@@ -71,10 +64,8 @@
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas" width="window.innerWidth" height="window.innerHeight"></canvas>
-
+  <canvas id="gameCanvas"></canvas>
   <div id="game-over">Game Over</div>
-
   <div class="bottom-menu">
     <div class="menu-button"><img src="assets/skins.png" alt="Skins"></div>
     <div class="menu-button"><img src="assets/shop.png" alt="Shop"></div>
@@ -86,12 +77,16 @@
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
     const balloonImg = new Image();
     balloonImg.src = 'assets/balloon.png';
-
     const obstacleImg = new Image();
     obstacleImg.src = 'assets/obstacle.png';
 
@@ -99,18 +94,18 @@
     let obstacles = [];
     let speed = 2;
     let gameOver = false;
+    let score = 0;
+    let lastTime = 0;
+    let spawnInterval;
 
     function drawBalloon() {
       ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
     }
 
     function drawObstacles() {
-      for (let i = 0; i < obstacles.length; i++) {
-        const obs = obstacles[i];
-        obs.y += speed;
+      for (let obs of obstacles) {
+        obs.y += speed * (lastTime ? (performance.now() - lastTime) / 16.67 : 1);
         ctx.drawImage(obstacleImg, obs.x, obs.y, obs.width, obs.height);
-
-        // Collision
         if (
           balloon.x < obs.x + obs.width &&
           balloon.x + balloon.width > obs.x &&
@@ -119,19 +114,26 @@
         ) {
           gameOver = true;
           document.getElementById('game-over').style.display = 'block';
+          clearInterval(spawnInterval);
         }
       }
-
       obstacles = obstacles.filter(obs => obs.y < canvas.height);
     }
 
-    function gameLoop() {
-      if (gameOver) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    function drawScore() {
+      ctx.fillStyle = 'black';
+      ctx.font = '20px sans-serif';
+      ctx.fillText(`Score: ${Math.floor(score)}`, 10, 30);
+      score += 1 / 60;
+    }
 
+    function gameLoop(time) {
+      if (gameOver) return;
+      lastTime = time;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawBalloon();
       drawObstacles();
-
+      drawScore();
       requestAnimationFrame(gameLoop);
     }
 
@@ -141,18 +143,47 @@
       obstacles.push({ x, y: -size, width: size, height: size });
     }
 
-    setInterval(spawnObstacle, 1500);
+    function resetGame() {
+      gameOver = false;
+      balloon.x = canvas.width / 2 - balloon.width / 2;
+      balloon.y = canvas.height / 2 - balloon.height / 2;
+      obstacles = [];
+      score = 0;
+      document.getElementById('game-over').style.display = 'none';
+      clearInterval(spawnInterval);
+      spawnInterval = setInterval(spawnObstacle, 1500);
+      gameLoop();
+    }
 
     canvas.addEventListener('touchmove', function(e) {
       e.preventDefault();
       let touch = e.touches[0];
-      balloon.x = touch.clientX - balloon.width / 2;
-      balloon.y = touch.clientY - balloon.height / 2;
+      balloon.x = Math.max(0, Math.min(touch.clientX - balloon.width / 2, canvas.width - balloon.width));
+      balloon.y = Math.max(0, Math.min(touch.clientY - balloon.height / 2, canvas.height - balloon.height));
     });
 
-    balloonImg.onload = () => {
-      gameLoop();
-    };
+    canvas.addEventListener('mousemove', function(e) {
+      balloon.x = Math.max(0, Math.min(e.clientX - balloon.width / 2, canvas.width - balloon.width));
+      balloon.y = Math.max(0, Math.min(e.clientY - balloon.height / 2, canvas.height - balloon.height));
+    });
+
+    document.querySelector('.menu-button.play').addEventListener('click', resetGame);
+    document.querySelector('.menu-button img[alt="Skins"]').parentNode.addEventListener('click', () => {
+      alert('Skins menu: Change balloon appearance (not implemented).');
+    });
+
+    let imagesLoaded = 0;
+    function checkImagesLoaded() {
+      imagesLoaded++;
+      if (imagesLoaded === 2) {
+        spawnInterval = setInterval(spawnObstacle, 1500);
+        gameLoop();
+      }
+    }
+    balloonImg.onload = checkImagesLoaded;
+    obstacleImg.onload = checkImagesLoaded;
+    balloonImg.onerror = () => alert('Failed to load balloon.png');
+    obstacleImg.onerror = () => alert('Failed to load obstacle.png');
   </script>
 </body>
 </html>
