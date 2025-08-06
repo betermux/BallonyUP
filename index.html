@@ -32,7 +32,7 @@
       height: 80px;
       background: rgba(255, 255, 255, 0.9);
       display: flex;
-      justify-content: center;
+      justify-content: space-between;
       align-items: center;
       padding: 0 10px;
       z-index: 2;
@@ -50,15 +50,27 @@
       width: 32px;
       height: 32px;
     }
+    .menu-button.skins, .menu-button.wallet {
+      flex: 1.5;
+      max-width: 120px;
+    }
+    .menu-button.skins img, .menu-button.wallet img {
+      width: 48px;
+      height: 48px;
+    }
     .menu-button.play {
       flex: 1.5;
       background: #ffcc00;
       border-radius: 10px;
       max-width: 120px;
+      order: 0; /* Голд байрлуулах */
     }
     .menu-button.play img {
       width: 48px;
       height: 48px;
+    }
+    .menu-button.wallet {
+      order: 1; /* Баруун захад байрлуулах */
     }
     #back-button {
       position: absolute;
@@ -125,11 +137,11 @@
   <canvas id="gameCanvas"></canvas>
   <button id="back-button">Back to Menu</button>
   <div class="bottom-menu" id="bottom-menu">
-    <div class="menu-button" data-layer="skins-layer"><img src="assets/skins.png" alt="Skins"></div>
-    <div class="menu-button" data-layer="wallet-layer"><img src="assets/wallet.png" alt="Wallet"></div>
+    <div class="menu-button skins" data-layer="skins-layer"><img src="assets/skins.png" alt="Skins"></div>
     <div class="menu-button" data-layer="tasks-layer"><img src="assets/tasks.png" alt="Tasks"></div>
     <div class="menu-button play" data-layer="play-layer"><img src="assets/play.png" alt="Play"></div>
     <div class="menu-button" data-layer="leaderboard-layer"><img src="assets/leaderboard.png" alt="Leaderboard"></div>
+    <div class="menu-button wallet" data-layer="wallet-layer"><img src="assets/wallet.png" alt="Wallet"></div>
   </div>
   <div id="skins-layer" class="menu-layer">
     <div>
