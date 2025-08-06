@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>MELONUS</title>
+  <title>Бөмбөлөгтэй Тоглоом</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <style>
     * {
@@ -116,8 +116,6 @@
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      balloon.y = canvas.height - 200; // Дэлгэцийн доод хэсэгт
-      balloon.x = canvas.width / 2 - balloon.width / 2; // Төвд эхлэнэ
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
@@ -127,7 +125,7 @@
     const obstacleImg = new Image();
     obstacleImg.src = 'assets/obstacle.png';
 
-    let balloon = { x: canvas.width / 2 - 80, y: canvas.height - 200, width: 160, height: 160 };
+    let balloon = { x: canvas.width / 2 - 80, y: canvas.height / 2, width: 160, height: 160, vx: 2 };
     let obstacles = [];
     let speed = 2;
     let gameOver = false;
@@ -136,7 +134,8 @@
     let spawnInterval;
     let isPlaying = false;
 
-    const menuBalloonSize = 480; // Меню дээрх бөмбөлгийн хэмжээ
+    // Меню дээрх бөмбөлгийн хэмжээ (3 дахин том)
+    const menuBalloonSize = 480;
 
     // Зургийн пикселийн өгөгдөл
     let balloonPixelData, obstaclePixelData;
@@ -182,6 +181,7 @@
 
     function drawBalloon() {
       if (!isPlaying) {
+        // Меню дээр том бөмбөлөг зурах
         ctx.drawImage(balloonImg, canvas.width / 2 - menuBalloonSize / 2, canvas.height / 2 - menuBalloonSize / 2, menuBalloonSize, menuBalloonSize);
       } else {
         ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
@@ -189,7 +189,7 @@
     }
 
     function drawObstacles() {
-      if (!isPlaying) return;
+      if (!isPlaying) return; // Меню дээр саад баригч харагдахгүй
       for (let obs of obstacles) {
         obs.y += speed * (lastTime ? (performance.now() - lastTime) / 16.67 : 1);
         ctx.drawImage(obstacleImg, obs.x, obs.y, obs.width, obs.height);
@@ -210,26 +210,39 @@
     }
 
     function drawScore() {
-      if (!isPlaying) return;
+      if (!isPlaying) return; // Меню дээр оноо харагдахгүй
       ctx.fillStyle = 'black';
       ctx.font = '20px sans-serif';
       ctx.fillText(`Оноо: ${Math.floor(score)}`, 10, 30);
       score += 1 / 60;
     }
 
+    function updateBalloon() {
+      if (isPlaying) {
+        balloon.x += balloon.vx;
+        if (balloon.x + balloon.width > canvas.width || balloon.x < 0) {
+          balloon.vx = -balloon.vx;
+        }
+      } else {
+        // Меню дээр бөмбөлөг хөдөлнө
+        balloon.x += balloon.vx;
+        if (balloon.x + menuBalloonSize > canvas.width || balloon.x < 0) {
+          balloon.vx = -balloon.vx;
+        }
+      }
+    }
+
     function gameLoop(time) {
       lastTime = time;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      updateBalloon();
       drawBalloon();
-      if (isPlaying) {
-        drawObstacles();
-        drawScore();
-      }
+      drawObstacles();
+      drawScore();
       requestAnimationFrame(gameLoop);
     }
 
     function spawnObstacle() {
-      if (!isPlaying) return;
       const size = 96;
       const x = Math.random() * (canvas.width - size);
       obstacles.push({ x, y: -size, width: size, height: size });
@@ -239,7 +252,8 @@
       gameOver = false;
       isPlaying = true;
       balloon.x = canvas.width / 2 - balloon.width / 2;
-      balloon.y = canvas.height - 200;
+      balloon.y = canvas.height / 2 - balloon.height / 2;
+      balloon.vx = 2;
       obstacles = [];
       score = 0;
       document.getElementById('game-over').style.display = 'none';
@@ -247,7 +261,7 @@
       document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
       clearInterval(spawnInterval);
       spawnInterval = setInterval(spawnObstacle, 1500);
-      gameLoop(); // Тоглоомын loop эхлүүлэх
+      gameLoop();
     }
 
     canvas.addEventListener('touchmove', function(e) {
@@ -255,12 +269,14 @@
         e.preventDefault();
         let touch = e.touches[0];
         balloon.x = Math.max(0, Math.min(touch.clientX - balloon.width / 2, canvas.width - balloon.width));
+        balloon.y = Math.max(0, Math.min(touch.clientY - balloon.height / 2, canvas.height - balloon.height));
       }
     });
 
     canvas.addEventListener('mousemove', function(e) {
       if (isPlaying) {
         balloon.x = Math.max(0, Math.min(e.clientX - balloon.width / 2, canvas.width - balloon.width));
+        balloon.y = Math.max(0, Math.min(e.clientY - balloon.height / 2, canvas.height - balloon.height));
       }
     });
 
@@ -289,7 +305,7 @@
       if (imagesLoaded === 2) {
         balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
         obstaclePixelData = getPixelData(obstacleImg, 96, 96);
-        gameLoop(); // Тоглоомын loop эхэлнэ
+        gameLoop(); // Тоглоомын loop эхэлнэ, гэхдээ саад баригч, оноо харагдахгүй
       }
     }
     balloonImg.onload = checkImagesLoaded;
