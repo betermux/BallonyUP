@@ -66,7 +66,7 @@
     }
 
     function createObstacle() {
-      const size = 64;
+      const size = 64 * 2.5; // 2.5x томруулсан
       const x = Math.random() * (canvas.width - size);
       obstacles.push({ x, y: -size, size, speed: 5 });
     }
@@ -82,24 +82,34 @@
         obs.y += obs.speed;
 
         // Collision check with smaller hitbox (3x smaller)
-        const hitboxPadding = obs.size * 0.66;
-        const hitbox = {
-          x: obs.x + hitboxPadding / 2,
-          y: obs.y + hitboxPadding / 2,
-          size: obs.size / 3
-        };
+        const reducedSize = obs.size / 3;
+        const centerX = obs.x + obs.size / 2 - reducedSize / 2;
+        const centerY = obs.y + obs.size / 2 - reducedSize / 2;
 
-        if (
-          balloon.x < hitbox.x + hitbox.size &&
-          balloon.x + balloon.width > hitbox.x &&
-          balloon.y < hitbox.y + hitbox.size &&
-          balloon.y + balloon.height > hitbox.y
-        ) {
+        if (isColliding(balloon, { x: centerX, y: centerY, size: reducedSize })) {
           gameOver = true;
         }
       }
 
       obstacles = obstacles.filter(obs => obs.y < canvas.height);
+    }
+
+    function isColliding(balloon, obstacle) {
+      // Balloon center and radius
+      const balloonCenterX = balloon.x + balloon.width / 2;
+      const balloonCenterY = balloon.y + balloon.height / 2;
+      const balloonRadius = balloon.width / 2;
+
+      // Obstacle center and radius
+      const obsCenterX = obstacle.x + obstacle.size / 2;
+      const obsCenterY = obstacle.y + obstacle.size / 2;
+      const obsRadius = obstacle.size / 2;
+
+      const dx = balloonCenterX - obsCenterX;
+      const dy = balloonCenterY - obsCenterY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      return distance < balloonRadius + obsRadius;
     }
 
     function drawScore() {
