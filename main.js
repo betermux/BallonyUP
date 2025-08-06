@@ -1,43 +1,86 @@
-const watermelon = document.getElementById('watermelon');
-const melotCountEl = document.getElementById('melot-count');
-let melot = 0;
-let holdInterval = null;
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-const popSound = new Audio('assets/pop_sound.mp3');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-function updateMelotDisplay() {
-  melotCountEl.textContent = melot;
-}
+let balloonImg = new Image();
+balloonImg.src = "assets/balloon.png";
 
-// Click/hold to mine melot
-watermelon.addEventListener('mousedown', () => {
-  popSound.currentTime = 0;
-  popSound.play();
-  melot++;
-  updateMelotDisplay();
+let cloudImg = new Image();
+cloudImg.src = "assets/cloud.png";
 
-  holdInterval = setInterval(() => {
-    melot++;
-    updateMelotDisplay();
-  }, 200);
+let score = 0;
+let balloon = { x: canvas.width / 2 - 25, y: canvas.height - 150, width: 50, height: 70 };
+let clouds = [];
+let gameOver = false;
+
+// Swipe control
+let startX = 0;
+canvas.addEventListener("touchstart", e => {
+  startX = e.touches[0].clientX;
 });
 
-document.addEventListener('mouseup', () => {
-  clearInterval(holdInterval);
+canvas.addEventListener("touchmove", e => {
+  let diff = e.touches[0].clientX - startX;
+  balloon.x += diff;
+  startX = e.touches[0].clientX;
 });
 
-// Navigation with background animation
-function navigateTo(page) {
-  const bg = document.getElementById('bg-animation');
-  bg.className = '';
-  bg.classList.add('bg-' + page);
-
-  try {
-    popSound.currentTime = 0;
-    popSound.play();
-  } catch (e) {}
-
-  console.log('Page:', page);
+// Саад үүл үүсгэх
+function spawnCloud() {
+  clouds.push({
+    x: Math.random() * (canvas.width - 80),
+    y: -80,
+    width: 80,
+    height: 50,
+    speed: 2 + Math.random() * 2
+  });
 }
 
-window.navigateTo = navigateTo;
+// Мөргөлдөөн шалгах
+function isColliding(obj1, obj2) {
+  return (
+    obj1.x < obj2.x + obj2.width &&
+    obj1.x + obj1.width > obj2.x &&
+    obj1.y < obj2.y + obj2.height &&
+    obj1.y + obj1.height > obj2.y
+  );
+}
+
+// Үндсэн loop
+function gameLoop() {
+  if (gameOver) return;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Clouds
+  for (let i = 0; i < clouds.length; i++) {
+    let c = clouds[i];
+    c.y += c.speed;
+    ctx.drawImage(cloudImg, c.x, c.y, c.width, c.height);
+
+    if (isColliding(balloon, c)) {
+      gameOver = true;
+      alert("🎈 Game Over! Score: " + score + " m");
+      return;
+    }
+  }
+
+  // Balloon
+  ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
+
+  // Score
+  score++;
+  document.getElementById("score").textContent = `${score} m`;
+
+  requestAnimationFrame(gameLoop);
+}
+
+// Саад spawn-дах
+setInterval(spawnCloud, 1000);
+
+// Start
+balloonImg.onload = () => {
+  gameLoop();
+};
