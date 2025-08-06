@@ -13,13 +13,20 @@
 
     body {
       overflow: hidden;
-      background: linear-gradient(#87ceeb, #fff);
       font-family: sans-serif;
     }
 
     canvas {
       display: block;
       touch-action: none;
+      background: linear-gradient(#87ceeb, #ffffff); /* Scrollable sky gradient */
+      background-size: 100% 200%;
+      animation: scrollBg 10s linear infinite;
+    }
+
+    @keyframes scrollBg {
+      from { background-position: 0 0; }
+      to { background-position: 0 -100%; }
     }
 
     #score {
@@ -29,6 +36,7 @@
       color: #333;
       font-size: 24px;
       font-weight: bold;
+      z-index: 2;
     }
   </style>
 </head>
@@ -66,9 +74,10 @@
     }
 
     function createObstacle() {
-      const size = 32;
+      const size = 80; // 2.5x томруулсан
       const x = Math.random() * (canvas.width - size);
-      obstacles.push({ x, y: -size, size, speed: 5 });
+      const speed = 4 + Math.random() * 2; // бага зэрэг өөр хурдтай
+      obstacles.push({ x, y: -size, size, speed });
     }
 
     function drawObstacles() {
@@ -81,7 +90,7 @@
       for (let obs of obstacles) {
         obs.y += obs.speed;
 
-        // Collision check
+        // Collision detection
         if (
           balloon.x < obs.x + obs.size &&
           balloon.x + balloon.width > obs.x &&
@@ -92,6 +101,7 @@
         }
       }
 
+      // Remove obstacles out of screen
       obstacles = obstacles.filter(obs => obs.y < canvas.height);
     }
 
@@ -111,7 +121,7 @@
       if (e.key === "ArrowRight") right = false;
     });
 
-    // Touch control
+    // Touch movement
     let touchStartX = null;
 
     canvas.addEventListener("touchstart", (e) => {
@@ -133,6 +143,11 @@
       touchStartX = null;
     });
 
+    function moveBalloon() {
+      if (left && balloon.x > 0) balloon.x -= balloon.speed;
+      if (right && balloon.x + balloon.width < canvas.width) balloon.x += balloon.speed;
+    }
+
     function gameLoop() {
       if (gameOver) {
         alert("Game Over! Your Score: " + score);
@@ -153,12 +168,7 @@
       requestAnimationFrame(gameLoop);
     }
 
-    function moveBalloon() {
-      if (left && balloon.x > 0) balloon.x -= balloon.speed;
-      if (right && balloon.x + balloon.width < canvas.width) balloon.x += balloon.speed;
-    }
-
-    setInterval(createObstacle, 1200);
+    setInterval(createObstacle, 1000); // шинэ саад 1 сек тутам
     gameLoop();
   </script>
 </body>
