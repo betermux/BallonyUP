@@ -116,6 +116,9 @@
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      // Бөмбөлгийн байрлалыг дахин тохируулах
+      balloon.y = canvas.height - 200; // Дэлгэцийн доод хэсэгт
+      balloon.x = canvas.width / 2 - balloon.width / 2;
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
@@ -125,7 +128,7 @@
     const obstacleImg = new Image();
     obstacleImg.src = 'assets/obstacle.png';
 
-    let balloon = { x: canvas.width / 2 - 80, y: canvas.height / 2, width: 160, height: 160, vx: 2 };
+    let balloon = { x: canvas.width / 2 - 80, y: canvas.height - 200, width: 160, height: 160 }; // Доод хэсэгт
     let obstacles = [];
     let speed = 2;
     let gameOver = false;
@@ -134,8 +137,7 @@
     let spawnInterval;
     let isPlaying = false;
 
-    // Меню дээрх бөмбөлгийн хэмжээ (3 дахин том)
-    const menuBalloonSize = 480;
+    const menuBalloonSize = 480; // Меню дээрх бөмбөлгийн хэмжээ
 
     // Зургийн пикселийн өгөгдөл
     let balloonPixelData, obstaclePixelData;
@@ -181,7 +183,6 @@
 
     function drawBalloon() {
       if (!isPlaying) {
-        // Меню дээр том бөмбөлөг зурах
         ctx.drawImage(balloonImg, canvas.width / 2 - menuBalloonSize / 2, canvas.height / 2 - menuBalloonSize / 2, menuBalloonSize, menuBalloonSize);
       } else {
         ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
@@ -189,7 +190,7 @@
     }
 
     function drawObstacles() {
-      if (!isPlaying) return; // Меню дээр саад баригч харагдахгүй
+      if (!isPlaying) return;
       for (let obs of obstacles) {
         obs.y += speed * (lastTime ? (performance.now() - lastTime) / 16.67 : 1);
         ctx.drawImage(obstacleImg, obs.x, obs.y, obs.width, obs.height);
@@ -210,32 +211,16 @@
     }
 
     function drawScore() {
-      if (!isPlaying) return; // Меню дээр оноо харагдахгүй
+      if (!isPlaying) return;
       ctx.fillStyle = 'black';
       ctx.font = '20px sans-serif';
       ctx.fillText(`Оноо: ${Math.floor(score)}`, 10, 30);
       score += 1 / 60;
     }
 
-    function updateBalloon() {
-      if (isPlaying) {
-        balloon.x += balloon.vx;
-        if (balloon.x + balloon.width > canvas.width || balloon.x < 0) {
-          balloon.vx = -balloon.vx;
-        }
-      } else {
-        // Меню дээр бөмбөлөг хөдөлнө
-        balloon.x += balloon.vx;
-        if (balloon.x + menuBalloonSize > canvas.width || balloon.x < 0) {
-          balloon.vx = -balloon.vx;
-        }
-      }
-    }
-
     function gameLoop(time) {
       lastTime = time;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      updateBalloon();
       drawBalloon();
       drawObstacles();
       drawScore();
@@ -252,8 +237,7 @@
       gameOver = false;
       isPlaying = true;
       balloon.x = canvas.width / 2 - balloon.width / 2;
-      balloon.y = canvas.height / 2 - balloon.height / 2;
-      balloon.vx = 2;
+      balloon.y = canvas.height - 200; // Дэлгэцийн доод хэсэгт
       obstacles = [];
       score = 0;
       document.getElementById('game-over').style.display = 'none';
@@ -269,14 +253,14 @@
         e.preventDefault();
         let touch = e.touches[0];
         balloon.x = Math.max(0, Math.min(touch.clientX - balloon.width / 2, canvas.width - balloon.width));
-        balloon.y = Math.max(0, Math.min(touch.clientY - balloon.height / 2, canvas.height - balloon.height));
+        // y тэнхлэгт хөдөлгөөнгүй
       }
     });
 
     canvas.addEventListener('mousemove', function(e) {
       if (isPlaying) {
         balloon.x = Math.max(0, Math.min(e.clientX - balloon.width / 2, canvas.width - balloon.width));
-        balloon.y = Math.max(0, Math.min(e.clientY - balloon.height / 2, canvas.height - balloon.height));
+        // y тэнхлэгт хөдөлгөөнгүй
       }
     });
 
@@ -305,7 +289,7 @@
       if (imagesLoaded === 2) {
         balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
         obstaclePixelData = getPixelData(obstacleImg, 96, 96);
-        gameLoop(); // Тоглоомын loop эхэлнэ, гэхдээ саад баригч, оноо харагдахгүй
+        gameLoop();
       }
     }
     balloonImg.onload = checkImagesLoaded;
