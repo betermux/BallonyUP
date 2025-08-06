@@ -1,36 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Balloon Skydive Game</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body {
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #87CEEB;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        canvas {
-            width: 100vw;
-            height: 100vh;
-            max-width: 800px;
-            max-height: 600px;
-            border: 2px solid #000;
-            -webkit-tap-highlight-color: transparent;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Balloon Dodge Game</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      overflow: hidden;
+      background: linear-gradient(#87ceeb, #fff);
+      font-family: sans-serif;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: #333;
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
-    <script src="game.js"></script>
+  <div id="score">Score: 0</div>
+  <canvas id="gameCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let balloon = {
+      x: canvas.width / 2 - 25,
+      y: canvas.height - 150,
+      width: 50,
+      height: 70,
+      speed: 6,
+      img: new Image()
+    };
+    balloon.img.src = "balloon.png"; // Төслийн assets дотроо balloon.png-г тавина уу
+
+    let obstacles = [];
+    let score = 0;
+    let gameOver = false;
+
+    function drawBalloon() {
+      ctx.drawImage(balloon.img, balloon.x, balloon.y, balloon.width, balloon.height);
+    }
+
+    function createObstacle() {
+      const width = Math.random() * 100 + 50;
+      const height = 30;
+      const x = Math.random() * (canvas.width - width);
+      obstacles.push({ x, y: -height, width, height, speed: 4 });
+    }
+
+    function drawObstacles() {
+      ctx.fillStyle = "gray";
+      for (let obs of obstacles) {
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+      }
+    }
+
+    function updateObstacles() {
+      for (let obs of obstacles) {
+        obs.y += obs.speed;
+        if (
+          balloon.x < obs.x + obs.width &&
+          balloon.x + balloon.width > obs.x &&
+          balloon.y < obs.y + obs.height &&
+          balloon.y + balloon.height > obs.y
+        ) {
+          gameOver = true;
+        }
+      }
+      obstacles = obstacles.filter((obs) => obs.y < canvas.height);
+    }
+
+    function drawScore() {
+      document.getElementById("score").textContent = "Score: " + score;
+    }
+
+    let left = false, right = false;
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") left = true;
+      if (e.key === "ArrowRight") right = true;
+    });
+
+    window.addEventListener("keyup", (e) => {
+      if (e.key === "ArrowLeft") left = false;
+      if (e.key === "ArrowRight") right = false;
+    });
+
+    function moveBalloon() {
+      if (left && balloon.x > 0) balloon.x -= balloon.speed;
+      if (right && balloon.x + balloon.width < canvas.width) balloon.x += balloon.speed;
+    }
+
+    function gameLoop() {
+      if (gameOver) {
+        alert("Game Over! Your Score: " + score);
+        window.location.reload();
+        return;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      moveBalloon();
+      drawBalloon();
+      drawObstacles();
+      updateObstacles();
+
+      score++;
+      drawScore();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    setInterval(createObstacle, 1000);
+    gameLoop();
+  </script>
 </body>
 </html>
