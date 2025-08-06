@@ -30,11 +30,95 @@
       font-size: 24px;
       font-weight: bold;
     }
+
+    #mainMenu {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: url('assets/bg.png') no-repeat center center;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #mainMenu button {
+      margin: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    #mainMenu img {
+      width: 80px;
+      height: auto;
+    }
+
+    #title {
+      font-size: 3rem;
+      color: #fff;
+      margin-bottom: 30px;
+      text-shadow: 2px 2px #000;
+    }
+
+    #bottomMenu {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 10px;
+    }
+
+    #bottomMenu button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 10px;
+      color: #fff;
+    }
+
+    #playBtn {
+      flex: 2;
+    }
+
+    #gameOver {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 3rem;
+      color: #fff;
+      text-shadow: 2px 2px #000;
+    }
+
+    #gameCanvas {
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <div id="score">Score: 0</div>
-  <canvas id="gameCanvas"></canvas>
+  <div id="mainMenu">
+    <h1 id="title">🎈 Hot Air Balloon</h1>
+    <button id="playBtn"><img src="assets/play.png" alt="Play" /></button>
+    <button id="settingsBtn"><img src="assets/settings.png" alt="Settings" /></button>
+    <button id="leaderboardBtn"><img src="assets/leaderboard.png" alt="Leaderboard" /></button>
+  </div>
+
+  <div id="gameContainer" style="display:none;">
+    <canvas id="gameCanvas"></canvas>
+    <div id="score">Score: 0</div>
+    <div id="gameOver" style="display:none;">Game Over!</div>
+    <div id="bottomMenu">
+      <button id="skinsBtn"><img src="assets/skins.png" alt="Skins" /></button>
+      <button id="shopBtn"><img src="assets/shop.png" alt="Shop" /></button>
+      <button id="playBtn"><img src="assets/play.png" alt="Play" /></button>
+      <button id="upgradeBtn"><img src="assets/upgrade.png" alt="Upgrade" /></button>
+      <button id="walletBtn"><img src="assets/wallet.png" alt="Wallet" /></button>
+    </div>
+  </div>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
@@ -66,60 +150,29 @@
     }
 
     function createObstacle() {
-      const size = 80;
+      const size = 64;
       const x = Math.random() * (canvas.width - size);
-      obstacles.push({ x, y: -size, width: size, height: size, speed: 5 });
+      obstacles.push({ x, y: -size, size, speed: 5 });
     }
 
     function drawObstacles() {
       for (let obs of obstacles) {
-        ctx.drawImage(obstacleImg, obs.x, obs.y, obs.width, obs.height);
+        ctx.drawImage(obstacleImg, obs.x, obs.y, obs.size, obs.size);
       }
-    }
-
-    function isPixelCollision(x1, y1, img1, x2, y2, img2, width, height) {
-      const buffer = document.createElement("canvas");
-      buffer.width = width;
-      buffer.height = height;
-      const bctx = buffer.getContext("2d");
-
-      // Draw both images
-      bctx.clearRect(0, 0, width, height);
-      bctx.drawImage(img1, x1 - Math.min(x1, x2), y1 - Math.min(y1, y2), width, height);
-      const data1 = bctx.getImageData(0, 0, width, height).data;
-
-      bctx.clearRect(0, 0, width, height);
-      bctx.drawImage(img2, x2 - Math.min(x1, x2), y2 - Math.min(y1, y2), width, height);
-      const data2 = bctx.getImageData(0, 0, width, height).data;
-
-      for (let i = 3; i < data1.length; i += 4) {
-        if (data1[i] > 10 && data2[i] > 10) {
-          return true;
-        }
-      }
-
-      return false;
     }
 
     function updateObstacles() {
       for (let obs of obstacles) {
         obs.y += obs.speed;
 
-        const intersectX = Math.max(balloon.x, obs.x);
-        const intersectY = Math.max(balloon.y, obs.y);
-        const intersectWidth = Math.min(balloon.x + balloon.width, obs.x + obs.width) - intersectX;
-        const intersectHeight = Math.min(balloon.y + balloon.height, obs.y + obs.height) - intersectY;
-
-        if (intersectWidth > 0 && intersectHeight > 0) {
-          if (
-            isPixelCollision(
-              balloon.x, balloon.y, balloonImg,
-              obs.x, obs.y, obstacleImg,
-              intersectWidth, intersectHeight
-            )
-          ) {
-            gameOver = true;
-          }
+        // Collision check
+        if (
+          balloon.x < obs.x + obs.size &&
+          balloon.x + balloon.width > obs.x &&
+          balloon.y < obs.y + obs.size &&
+          balloon.y + balloon.height > obs.y
+        ) {
+          gameOver = true;
         }
       }
 
@@ -166,8 +219,7 @@
 
     function gameLoop() {
       if (gameOver) {
-        alert("Game Over! Your Score: " + score);
-        window.location.reload();
+        document.getElementById("gameOver").style.display = "block";
         return;
       }
 
@@ -189,8 +241,14 @@
       if (right && balloon.x + balloon.width < canvas.width) balloon.x += balloon.speed;
     }
 
+    // Play button logic
+    document.getElementById("playBtn").onclick = () => {
+      document.getElementById("mainMenu").style.display = "none";
+      document.getElementById("gameContainer").style.display = "block";
+      gameLoop();
+    };
+
     setInterval(createObstacle, 1200);
-    gameLoop();
   </script>
 </body>
 </html>
