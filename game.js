@@ -21,8 +21,8 @@ restartImg.src = 'assets/restart.png';
 let balloon = {
     x: canvas.width / 2,
     y: 500, // Start near bottom
-    width: null, // Set after image loads
-    height: null,
+    width: 50, // Fixed size for balloon
+    height: 80,
     vy: -2, // Upward velocity
     vx: 0,  // Horizontal velocity
     drag: 0.95 // Drag factor
@@ -31,8 +31,8 @@ let clouds = [];
 let gameOver = false;
 let isDragging = false;
 let score = 0;
-let cameraY = 0; // Camera offset
-let touchX = null; // Track touch position
+let cameraY = 0;
+let touchX = null;
 
 // Cloud spawn settings
 const cloudSpawnRate = 100;
@@ -45,135 +45,165 @@ canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
 function handleTouchStart(e) {
     e.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const touch = e.touches[0];
-    const touchXPos = (touch.clientX - rect.left) * scaleX;
-    const touchYPos = (touch.clientY - rect.top) * (canvas.height / rect.height);
+    try {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const touch = e.touches[0];
+        const touchXPos = (touch.clientX - rect.left) * scaleX;
+        const touchYPos = (touch.clientY - rect.top) * scaleY;
 
-    if (gameOver) {
-        const restartBtn = { x: canvas.width / 2 - 50, y: canvas.height / 2, width: 100, height: 50 };
-        if (
-            touchXPos >= restartBtn.x &&
-            touchXPos <= restartBtn.x + restartBtn.width &&
-            touchYPos >= restartBtn.y &&
-            touchYPos <= restartBtn.y + restartBtn.height
-        ) {
-            resetGame();
+        if (gameOver) {
+            const restartBtn = { x: canvas.width / 2 - 50, y: canvas.height / 2, width: 100, height: 50 };
+            if (
+                touchXPos >= restartBtn.x &&
+                touchXPos <= restartBtn.x + restartBtn.width &&
+                touchYPos >= restartBtn.y &&
+                touchYPos <= restartBtn.y + restartBtn.height
+            ) {
+                resetGame();
+            }
+        } else {
+            isDragging = true;
+            touchX = touchXPos;
         }
-    } else {
-        isDragging = true;
-        touchX = touchXPos;
+    } catch (error) {
+        console.error('Touch start error:', error);
     }
 }
 
 function handleTouchMove(e) {
     e.preventDefault();
-    if (isDragging && !gameOver) {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const touch = e.touches[0];
-        touchX = (touch.clientX - rect.left) * scaleX;
-        // Apply velocity based on touch position
-        balloon.vx += (touchX - balloon.x) * 0.1; // Increased sensitivity for mobile
+    try {
+        if (isDragging && !gameOver) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const touch = e.touches[0];
+            touchX = (touch.clientX - rect.left) * scaleX;
+            balloon.vx = (touchX - balloon.x) * 0.1; // Direct velocity for smoother control
+        }
+    } catch (error) {
+        console.error('Touch move error:', error);
     }
 }
 
 function handleTouchEnd(e) {
     e.preventDefault();
-    isDragging = false;
-    touchX = null;
+    try {
+        isDragging = false;
+        touchX = null;
+    } catch (error) {
+        console.error('Touch end error:', error);
+    }
 }
 
 // Spawn clouds
 function spawnCloud() {
-    const cloud = {
-        x: Math.random() * (canvas.width - cloudImg.width),
-        y: cameraY - cloudImg.height, // Spawn above canvas
-        width: cloudImg.width,
-        height: cloudImg.height,
-        vy: 2 // Clouds move downward
-    };
-    clouds.push(cloud);
+    try {
+        const cloud = {
+            x: Math.random() * (canvas.width - (cloudImg.width || 100)),
+            y: cameraY - (cloudImg.height || 60),
+            width: cloudImg.width || 100, // Fallback size
+            height: cloudImg.height || 60,
+            vy: 2
+        };
+        clouds.push(cloud);
+    } catch (error) {
+        console.error('Spawn cloud error:', error);
+    }
 }
 
 // Check collision
 function checkCollision(balloon, cloud) {
-    return (
-        balloon.x < cloud.x + cloud.width &&
-        balloon.x + balloon.width > cloud.x &&
-        balloon.y < cloud.y + cloud.height &&
-        balloon.y + balloon.height > cloud.y
-    );
+    try {
+        return (
+            balloon.x < cloud.x + cloud.width &&
+            balloon.x + balloon.width > cloud.x &&
+            balloon.y < cloud.y + cloud.height &&
+            balloon.y + balloon.height > cloud.y
+        );
+    } catch (error) {
+        console.error('Collision check error:', error);
+        return false;
+    }
 }
 
 // Reset game
 function resetGame() {
-    balloon.x = canvas.width / 2;
-    balloon.y = 500;
-    balloon.vx = 0;
-    clouds = [];
-    score = 0;
-    cameraY = 0;
-    gameOver = false;
+    try {
+        balloon.x = canvas.width / 2;
+        balloon.y = 500;
+        balloon.vx = 0;
+        clouds = [];
+        score = 0;
+        cameraY = 0;
+        gameOver = false;
+        isDragging = false;
+        touchX = null;
+    } catch (error) {
+        console.error('Reset game error:', error);
+    }
 }
 
 // Game loop
 function update() {
-    if (!gameOver) {
-        // Update balloon
-        balloon.y += balloon.vy; // Float upward
-        balloon.x += balloon.vx; // Move horizontally
-        balloon.vx *= balloon.drag; // Apply drag
+    try {
+        if (!gameOver) {
+            // Update balloon
+            balloon.y += balloon.vy;
+            balloon.x += balloon.vx;
+            balloon.vx *= balloon.drag;
 
-        // Keep balloon in bounds
-        if (balloon.x < 0) balloon.x = 0;
-        if (balloon.x + balloon.width > canvas.width) balloon.x = canvas.width - balloon.width;
+            // Keep balloon in bounds
+            balloon.x = Math.max(0, Math.min(balloon.x, canvas.width - balloon.width));
 
-        // Update camera to follow balloon
-        cameraY = Math.max(0, balloon.y - canvas.height / 2);
+            // Update camera
+            cameraY = Math.max(0, balloon.y - canvas.height / 2);
 
-        // Spawn clouds
-        cloudSpawnTimer++;
-        if (cloudSpawnTimer > cloudSpawnRate) {
-            spawnCloud();
-            cloudSpawnTimer = 0;
+            // Spawn clouds
+            cloudSpawnTimer++;
+            if (cloudSpawnTimer > cloudSpawnRate) {
+                spawnCloud();
+                cloudSpawnTimer = 0;
+            }
+
+            // Update clouds
+            clouds = clouds.filter(cloud => cloud.y < cameraY + canvas.height + (cloud.height || 60));
+            clouds.forEach(cloud => {
+                cloud.y += cloud.vy;
+                if (checkCollision(balloon, cloud)) {
+                    gameOver = true;
+                }
+            });
+
+            // Update score
+            score = Math.floor(cameraY / 100);
         }
 
-        // Update clouds
-        clouds = clouds.filter(cloud => cloud.y < cameraY + canvas.height + cloud.height);
+        // Draw
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw clouds
         clouds.forEach(cloud => {
-            cloud.y += cloud.vy;
-            if (checkCollision(balloon, cloud)) {
-                gameOver = true;
-            }
+            ctx.drawImage(cloudImg, cloud.x, cloud.y - cameraY, cloud.width, cloud.height);
         });
 
-        // Update score
-        score = Math.floor(cameraY / 100);
-    }
+        // Draw balloon
+        ctx.drawImage(balloonImg, balloon.x, balloon.y - cameraY, balloon.width, balloon.height);
 
-    // Draw
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw clouds
-    clouds.forEach(cloud => {
-        ctx.drawImage(cloudImg, cloud.x, cloud.y - cameraY, cloud.width, cloud.height);
-    });
+        // Draw score
+        ctx.fillStyle = 'black';
+        ctx.font = '20px Arial';
+        ctx.fillText(`Score: ${score}`, 10, 30);
 
-    // Draw balloon
-    ctx.drawImage(balloonImg, balloon.x, balloon.y - cameraY, balloon.width, balloon.height);
-
-    // Draw score
-    ctx.fillStyle = 'black';
-    ctx.font = '20px Arial';
-    ctx.fillText(`Score: ${score}`, 10, 30);
-
-    // Draw game over
-    if (gameOver) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(restartImg, canvas.width / 2 - 50, canvas.height / 2, 100, 50);
+        // Draw game over
+        if (gameOver) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(restartImg, canvas.width / 2 - 50, canvas.height / 2, 100, 50);
+        }
+    } catch (error) {
+        console.error('Update loop error:', error);
     }
 
     requestAnimationFrame(update);
@@ -183,11 +213,20 @@ function update() {
 let assetsLoaded = 0;
 const totalAssets = 3;
 function checkAssetsLoaded() {
-    assetsLoaded++;
-    if (assetsLoaded === totalAssets) {
-        balloon.width = balloonImg.width;
-        balloon.height = balloonImg.height;
-        update();
+    try {
+        assetsLoaded++;
+        if (assetsLoaded === totalAssets) {
+            // Set balloon to fixed size, clouds/restart to natural size
+            balloon.width = 50;
+            balloon.height = 80;
+            clouds.forEach(cloud => {
+                cloud.width = cloudImg.width || 100;
+                cloud.height = cloudImg.height || 60;
+            });
+            update();
+        }
+    } catch (error) {
+        console.error('Asset load error:', error);
     }
 }
 balloonImg.onload = checkAssetsLoaded;
