@@ -66,8 +66,8 @@
       order: 0; /* Голд байрлуулах */
     }
     .menu-button.play img {
-      width: 48px;
-      height: 48px;
+      width: 80px; /* 32px * 2.5 = 80px */
+      height: 80px;
     }
     .menu-button.wallet {
       order: 1; /* Баруун захад байрлуулах */
@@ -131,11 +131,32 @@
       padding: 5px;
       font-size: 18px;
     }
+    .score-display {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      display: flex;
+      align-items: center;
+      z-index: 2;
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+    .score-display img {
+      width: 24px;
+      height: 24px;
+      margin-right: 5px;
+    }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
   <button id="back-button">Back to Menu</button>
+  <div class="score-display">
+    <img src="assets/coin.png" alt="Coin">
+    <span id="score-display-top">0</span>
+  </div>
   <div class="bottom-menu" id="bottom-menu">
     <div class="menu-button skins" data-layer="skins-layer"><img src="assets/skins.png" alt="Skins"></div>
     <div class="menu-button" data-layer="tasks-layer"><img src="assets/tasks.png" alt="Tasks"></div>
@@ -186,9 +207,15 @@
     const bottomMenu = document.getElementById('bottom-menu');
     const backButton = document.getElementById('back-button');
 
-    // Background зургийг ачаалах
+    // Зургуудыг ачаалах
     const bgImg = new Image();
     bgImg.src = 'assets/bg.png';
+    const balloonImg = new Image();
+    balloonImg.src = 'assets/balloon.png';
+    const obstacleImg = new Image();
+    obstacleImg.src = 'assets/obstacle.png';
+    const coinImg = new Image();
+    coinImg.src = 'assets/coin.png';
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -196,11 +223,6 @@
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-
-    const balloonImg = new Image();
-    balloonImg.src = 'assets/balloon.png';
-    const obstacleImg = new Image();
-    obstacleImg.src = 'assets/obstacle.png';
 
     let balloon = { x: canvas.width / 2 - 64, y: canvas.height / 2, width: 128, height: 128 }; // 20% жижиг
     let obstacles = [];
@@ -212,6 +234,12 @@
     let spawnInterval;
     let isPlaying = false;
     let playCount = localStorage.getItem(`playCount_${userId}`) ? parseInt(localStorage.getItem(`playCount_${userId}`)) : 0;
+
+    // Бөмбөлгийн хөдөлгөөний хувьсагчууд
+    let balloonY = canvas.height / 2;
+    let balloonVelocity = 0;
+    const balloonAmplitude = 50; // Дээш доош хөдөлгөөний хэмжээ
+    const balloonFrequency = 0.002; // Хөдөлгөөний хурд
 
     // Даалгаврын систем
     let tasks = [
@@ -254,11 +282,13 @@
       return false;
     }
 
-    function drawBalloon() {
+    function drawBalloon(time) {
       if (!isPlaying) {
-        // Гол меню дээр bg.png болон бөмбөлгийг харуулах
+        // Гол меню дээр bg.png болон хөдөлгөөнтэй бөмбөлгийг харуулах
         ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-        ctx.drawImage(balloonImg, canvas.width / 2 - menuBalloonSize / 2, canvas.height / 2 - menuBalloonSize / 2, menuBalloonSize, menuBalloonSize);
+        // Дээш доош хөдөлгөөн (sin функц ашиглан жигд хөдөлгөөн)
+        balloonY = canvas.height / 2 + Math.sin(time * balloonFrequency) * balloonAmplitude;
+        ctx.drawImage(balloonImg, canvas.width / 2 - menuBalloonSize / 2, balloonY - menuBalloonSize / 2, menuBalloonSize, menuBalloonSize);
       } else {
         ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
       }
@@ -287,14 +317,21 @@
     }
 
     function drawScore() {
-      if (!isPlaying) return;
-      ctx.fillStyle = 'black';
-      ctx.font = '24px sans-serif';
-      ctx.fillText(`Score: ${Math.floor(score)} | High Score: ${Math.floor(highScore)}`, 10, 30);
-      score += 1 / 60;
-      if (score > highScore) {
-        highScore = score;
-        localStorage.setItem(`highScore_${userId}`, highScore);
+      if (!isPlaying) {
+        // Гол меню дээр coin.png болон оноог харуулах
+        document.getElementById('score-display-top').textContent = Math.floor(highScore);
+      } else {
+        // Тоглоомын явцад оноог canvas дээр харуулах
+        ctx.fillStyle = 'black';
+        ctx.font = '24px sans-serif';
+        ctx.drawImage(coinImg, 10, 10, 24, 24);
+        ctx.fillText(`${Math.floor(score)} | High Score: ${Math.floor(highScore)}`, 40, 30);
+        score += 1 / 60;
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem(`highScore_${userId}`, highScore);
+        }
+        document.getElementById('score-display-top').textContent = Math.floor(highScore);
       }
       updateWallet();
     }
@@ -314,7 +351,7 @@
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
       updateBalloon();
-      drawBalloon();
+      drawBalloon(time); // time-г дамжуулж хөдөлгөөн хийнэ
       drawObstacles(deltaTime);
       drawScore();
       requestAnimationFrame(gameLoop);
@@ -422,6 +459,8 @@
     document.querySelectorAll('.menu-button').forEach(button => {
       button.addEventListener('click', () => {
         if (!isPlaying) {
+          // Haptic feedback нэмэх
+          tg.HapticFeedback.impactOccurred('medium');
           const layerId = button.dataset.layer;
           if (layerId === 'play-layer') {
             resetGame();
@@ -438,20 +477,24 @@
 
     document.querySelectorAll('.menu-layer .back-button').forEach(button => {
       button.addEventListener('click', () => {
+        // Haptic feedback нэмэх
+        tg.HapticFeedback.impactOccurred('medium');
         button.parentNode.parentNode.style.display = 'none';
       });
     });
 
     backButton.addEventListener('click', () => {
+      // Haptic feedback нэмэх
+      tg.HapticFeedback.impactOccurred('medium');
       backButton.style.display = 'none';
-      bottomMenu.style.display = 'flex'; // Цэсийг буцааж харуулах
+      bottomMenu.style.display = 'flex';
       document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
     });
 
     let imagesLoaded = 0;
     function checkImagesLoaded() {
       imagesLoaded++;
-      if (imagesLoaded === 3) { // bg.png, balloon.png, obstacle.png
+      if (imagesLoaded === 4) { // bg.png, balloon.png, obstacle.png, coin.png
         balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
         obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8);
         updateTaskList();
@@ -463,11 +506,15 @@
     bgImg.onload = checkImagesLoaded;
     balloonImg.onload = checkImagesLoaded;
     obstacleImg.onload = checkImagesLoaded;
+    coinImg.onload = checkImagesLoaded;
     bgImg.onerror = () => tg.showAlert('Failed to load background image');
     balloonImg.onerror = () => tg.showAlert('Failed to load balloon image');
     obstacleImg.onerror = () => tg.showAlert('Failed to load obstacle image');
+    coinImg.onerror = () => tg.showAlert('Failed to load coin image');
 
     tg.BackButton.onClick(() => {
+      // Haptic feedback нэмэх
+      tg.HapticFeedback.impactOccurred('medium');
       document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
       bottomMenu.style.display = 'flex';
     });
