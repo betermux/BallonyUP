@@ -44,16 +44,20 @@
     canvas.height = window.innerHeight;
 
     const balloonImg = new Image();
-    balloonImg.src = "assets/balloon.png"; // Зургийн зам
+    balloonImg.src = "assets/balloon.png";
+
+    const obstacleImg = new Image();
+    obstacleImg.src = "assets/obstacle.png";
 
     let balloon = {
-      x: canvas.width / 2 - 80, // 160 / 2
+      x: canvas.width / 2 - 80,
       y: canvas.height - 180,
       width: 160,
       height: 160,
       speed: 8
     };
 
+    let obstacles = [];
     let score = 0;
     let gameOver = false;
 
@@ -61,13 +65,38 @@
       ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
     }
 
-    function drawScore() {
-      document.getElementById("score").textContent = "Score: " + score;
+    function createObstacle() {
+      const size = 32;
+      const x = Math.random() * (canvas.width - size);
+      obstacles.push({ x, y: -size, size, speed: 5 });
     }
 
-    function moveBalloon() {
-      if (left && balloon.x > 0) balloon.x -= balloon.speed;
-      if (right && balloon.x + balloon.width < canvas.width) balloon.x += balloon.speed;
+    function drawObstacles() {
+      for (let obs of obstacles) {
+        ctx.drawImage(obstacleImg, obs.x, obs.y, obs.size, obs.size);
+      }
+    }
+
+    function updateObstacles() {
+      for (let obs of obstacles) {
+        obs.y += obs.speed;
+
+        // Collision check
+        if (
+          balloon.x < obs.x + obs.size &&
+          balloon.x + balloon.width > obs.x &&
+          balloon.y < obs.y + obs.size &&
+          balloon.y + balloon.height > obs.y
+        ) {
+          gameOver = true;
+        }
+      }
+
+      obstacles = obstacles.filter(obs => obs.y < canvas.height);
+    }
+
+    function drawScore() {
+      document.getElementById("score").textContent = "Score: " + score;
     }
 
     let left = false, right = false;
@@ -82,7 +111,7 @@
       if (e.key === "ArrowRight") right = false;
     });
 
-    // 🟢 Touch control (drag)
+    // Touch control
     let touchStartX = null;
 
     canvas.addEventListener("touchstart", (e) => {
@@ -96,7 +125,6 @@
       balloon.x += dx;
       touchStartX = touchX;
 
-      // Boundary check
       if (balloon.x < 0) balloon.x = 0;
       if (balloon.x + balloon.width > canvas.width) balloon.x = canvas.width - balloon.width;
     });
@@ -116,6 +144,8 @@
 
       moveBalloon();
       drawBalloon();
+      drawObstacles();
+      updateObstacles();
 
       score++;
       drawScore();
@@ -123,6 +153,12 @@
       requestAnimationFrame(gameLoop);
     }
 
+    function moveBalloon() {
+      if (left && balloon.x > 0) balloon.x -= balloon.speed;
+      if (right && balloon.x + balloon.width < canvas.width) balloon.x += balloon.speed;
+    }
+
+    setInterval(createObstacle, 1200);
     gameLoop();
   </script>
 </body>
