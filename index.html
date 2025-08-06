@@ -241,6 +241,10 @@
     const balloonAmplitude = 50; // Дээш доош хөдөлгөөний хэмжээ
     const balloonFrequency = 0.002; // Хөдөлгөөний хурд
 
+    // Дэвсгэрийн хөдөлгөөний хувьсагчууд
+    let bgX = 0;
+    const bgSpeed = 50; // Зүүн тийш хөдлөх хурд (px/s)
+
     // Даалгаврын систем
     let tasks = [
       { id: 'score_1000', description: 'Score 1000 points', reward: 'Unlock Red Skin', completed: false },
@@ -282,11 +286,21 @@
       return false;
     }
 
+    function drawBackground(time, deltaTime) {
+      if (!isPlaying) {
+        // Зүүн тийш хөдлөх дэвсгэр
+        bgX -= bgSpeed * deltaTime;
+        if (bgX <= -canvas.width) {
+          bgX += canvas.width; // Loop хийх
+        }
+        ctx.drawImage(bgImg, bgX, 0, canvas.width, canvas.height);
+        ctx.drawImage(bgImg, bgX + canvas.width, 0, canvas.width, canvas.height); // Хоёр дахь хуулбар
+      }
+    }
+
     function drawBalloon(time) {
       if (!isPlaying) {
-        // Гол меню дээр bg.png болон хөдөлгөөнтэй бөмбөлгийг харуулах
-        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-        // Дээш доош хөдөлгөөн (sin функц ашиглан жигд хөдөлгөөн)
+        // Дээш доош хөдөлгөөнтэй бөмбөлөг
         balloonY = canvas.height / 2 + Math.sin(time * balloonFrequency) * balloonAmplitude;
         ctx.drawImage(balloonImg, canvas.width / 2 - menuBalloonSize / 2, balloonY - menuBalloonSize / 2, menuBalloonSize, menuBalloonSize);
       } else {
@@ -317,10 +331,9 @@
     }
 
     function drawScore() {
-      if (!isPlaying) {
-        // Гол меню дээр coin.png болон оноог харуулах
-        document.getElementById('score-display-top').textContent = Math.floor(highScore);
-      } else {
+      // Оноог тоглоомын явц болон гол меню дээр зөв харуулах
+      document.getElementById('score-display-top').textContent = Math.floor(highScore);
+      if (isPlaying) {
         // Тоглоомын явцад оноог canvas дээр харуулах
         ctx.fillStyle = 'black';
         ctx.font = '24px sans-serif';
@@ -330,8 +343,8 @@
         if (score > highScore) {
           highScore = score;
           localStorage.setItem(`highScore_${userId}`, highScore);
+          document.getElementById('score-display-top').textContent = Math.floor(highScore);
         }
-        document.getElementById('score-display-top').textContent = Math.floor(highScore);
       }
       updateWallet();
     }
@@ -349,9 +362,11 @@
       if (isPlaying) {
         ctx.fillStyle = '#aee1f9'; // Тоглоомын явцын дэвсгэр өнгө
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else {
+        drawBackground(time, deltaTime); // Гол меню дээр хөдлөх дэвсгэр
       }
       updateBalloon();
-      drawBalloon(time); // time-г дамжуулж хөдөлгөөн хийнэ
+      drawBalloon(time);
       drawObstacles(deltaTime);
       drawScore();
       requestAnimationFrame(gameLoop);
@@ -459,7 +474,6 @@
     document.querySelectorAll('.menu-button').forEach(button => {
       button.addEventListener('click', () => {
         if (!isPlaying) {
-          // Haptic feedback нэмэх
           tg.HapticFeedback.impactOccurred('medium');
           const layerId = button.dataset.layer;
           if (layerId === 'play-layer') {
@@ -477,14 +491,12 @@
 
     document.querySelectorAll('.menu-layer .back-button').forEach(button => {
       button.addEventListener('click', () => {
-        // Haptic feedback нэмэх
         tg.HapticFeedback.impactOccurred('medium');
         button.parentNode.parentNode.style.display = 'none';
       });
     });
 
     backButton.addEventListener('click', () => {
-      // Haptic feedback нэмэх
       tg.HapticFeedback.impactOccurred('medium');
       backButton.style.display = 'none';
       bottomMenu.style.display = 'flex';
@@ -513,7 +525,6 @@
     coinImg.onerror = () => tg.showAlert('Failed to load coin image');
 
     tg.BackButton.onClick(() => {
-      // Haptic feedback нэмэх
       tg.HapticFeedback.impactOccurred('medium');
       document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
       bottomMenu.style.display = 'flex';
