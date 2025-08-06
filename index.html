@@ -16,7 +16,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #aee1f9;
+      background: #aee1f9; /* Тоглоомын явцын дэвсгэр өнгө */
       font-family: sans-serif;
     }
     canvas {
@@ -186,6 +186,10 @@
     const bottomMenu = document.getElementById('bottom-menu');
     const backButton = document.getElementById('back-button');
 
+    // Background зургийг ачаалах
+    const bgImg = new Image();
+    bgImg.src = 'assets/bg.png';
+
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -198,8 +202,7 @@
     const obstacleImg = new Image();
     obstacleImg.src = 'assets/obstacle.png';
 
-    // Balloon болон obstacle-ийн хэмжээг 20% жижиг болгосон
-    let balloon = { x: canvas.width / 2 - 64, y: canvas.height / 2, width: 128, height: 128 }; // 160 * 0.8 = 128
+    let balloon = { x: canvas.width / 2 - 64, y: canvas.height / 2, width: 128, height: 128 }; // 20% жижиг
     let obstacles = [];
     let speed = 2;
     let gameOver = false;
@@ -216,7 +219,7 @@
       { id: 'play_3_times', description: 'Play 3 times', reward: 'Unlock Blue Skin', progress: playCount, target: 3, completed: false },
     ];
 
-    const menuBalloonSize = 384; // Меню дээрх бөмбөлгийн хэмжээг мөн 20% жижиг болгосон (480 * 0.8 = 384)
+    const menuBalloonSize = 384; // Меню дээрх бөмбөлөг 20% жижиг
     let balloonPixelData, obstaclePixelData;
     const offscreenCanvas = document.createElement('canvas');
     const offscreenCtx = offscreenCanvas.getContext('2d');
@@ -253,6 +256,8 @@
 
     function drawBalloon() {
       if (!isPlaying) {
+        // Гол меню дээр bg.png болон бөмбөлгийг харуулах
+        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
         ctx.drawImage(balloonImg, canvas.width / 2 - menuBalloonSize / 2, canvas.height / 2 - menuBalloonSize / 2, menuBalloonSize, menuBalloonSize);
       } else {
         ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
@@ -304,6 +309,10 @@
       const deltaTime = lastTime ? (time - lastTime) / 1000 : 1/60;
       lastTime = time;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (isPlaying) {
+        ctx.fillStyle = '#aee1f9'; // Тоглоомын явцын дэвсгэр өнгө
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
       updateBalloon();
       drawBalloon();
       drawObstacles(deltaTime);
@@ -312,7 +321,7 @@
     }
 
     function spawnObstacle() {
-      const size = 76.8; // 96 * 0.8 = 76.8 (20% жижиг)
+      const size = 76.8; // 20% жижиг
       const x = Math.random() * (canvas.width - size);
       obstacles.push({ x, y: -size, width: size, height: size });
     }
@@ -400,14 +409,12 @@
       if (isPlaying) {
         e.preventDefault();
         let touch = e.touches[0];
-        // Balloon-ийн хөдөлгөөнийг canvas-ийн дотор хязгаарлах
         balloon.x = Math.max(10, Math.min(touch.clientX - balloon.width / 2, canvas.width - balloon.width - 10));
       }
     }, { passive: false });
 
     canvas.addEventListener('mousemove', function(e) {
       if (isPlaying) {
-        // Balloon-ийн хөдөлгөөнийг canvas-ийн дотор хязгаарлах
         balloon.x = Math.max(10, Math.min(e.clientX - balloon.width / 2, canvas.width - balloon.width - 10));
       }
     });
@@ -444,17 +451,19 @@
     let imagesLoaded = 0;
     function checkImagesLoaded() {
       imagesLoaded++;
-      if (imagesLoaded === 2) {
+      if (imagesLoaded === 3) { // bg.png, balloon.png, obstacle.png
         balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
-        obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8); // Obstacle-ийн хэмжээг мөн 20% жижиг болгосон
+        obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8);
         updateTaskList();
         updateLeaderboard();
         updateWallet();
         gameLoop();
       }
     }
+    bgImg.onload = checkImagesLoaded;
     balloonImg.onload = checkImagesLoaded;
     obstacleImg.onload = checkImagesLoaded;
+    bgImg.onerror = () => tg.showAlert('Failed to load background image');
     balloonImg.onerror = () => tg.showAlert('Failed to load balloon image');
     obstacleImg.onerror = () => tg.showAlert('Failed to load obstacle image');
 
