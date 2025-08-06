@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Balloon Game</title>
+  <title>Бөмбөлөгтэй Тоглоом</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <style>
     * {
@@ -42,6 +42,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      cursor: pointer;
     }
     .menu-button img {
       width: 32px;
@@ -61,23 +62,50 @@
       z-index: 2;
       display: none;
     }
+    .menu-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 24px;
+      z-index: 3;
+    }
+    .menu-layer button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 10px;
+      font-size: 18px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
-  <div id="game-over">Game Over</div>
+  <div id="game-over">Тоглоом Дууслаа</div>
   <div class="bottom-menu">
-    <div class="menu-button"><img src="assets/skins.png" alt="Skins"></div>
-    <div class="menu-button"><img src="assets/shop.png" alt="Shop"></div>
-    <div class="menu-button play"><img src="assets/play.png" alt="Play"></div>
-    <div class="menu-button"><img src="assets/upgrade.png" alt="Upgrade"></div>
-    <div class="menu-button"><img src="assets/wallet.png" alt="Wallet"></div>
+    <div class="menu-button" data-layer="skins-layer"><img src="assets/skins.png" alt="Skins"></div>
+    <div class="menu-button" data-layer="shop-layer"><img src="assets/shop.png" alt="Shop"></div>
+    <div class="menu-button play" data-layer="play-layer"><img src="assets/play.png" alt="Play"></div>
+    <div class="menu-button" data-layer="upgrade-layer"><img src="assets/upgrade.png" alt="Upgrade"></div>
+    <div class="menu-button" data-layer="wallet-layer"><img src="assets/wallet.png" alt="Wallet"></div>
   </div>
+  <div id="skins-layer" class="menu-layer">Хувцасны Цэс (Одоогоор хэрэгжээгүй)<button>Хаах</button></div>
+  <div id="shop-layer" class="menu-layer">Дэлгүүр (Одоогоор хэрэгжээгүй)<button>Хаах</button></div>
+  <div id="play-layer" class="menu-layer">Тоглоомын Цэс (Одоогоор хэрэгжээгүй)<button>Хаах</button></div>
+  <div id="upgrade-layer" class="menu-layer">Сайжруулалт (Одоогоор хэрэгжээгүй)<button>Хаах</button></div>
+  <div id="wallet-layer" class="menu-layer">Хэтэвч (Одоогоор хэрэгжээгүй)<button>Хаах</button></div>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    
+
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -90,7 +118,7 @@
     const obstacleImg = new Image();
     obstacleImg.src = 'assets/obstacle.png';
 
-    let balloon = { x: canvas.width / 2 - 16, y: canvas.height / 2, width: 32, height: 32 };
+    let balloon = { x: canvas.width / 2 - 64, y: canvas.height / 2, width: 128, height: 128 }; // 4 дахин томруулсан
     let obstacles = [];
     let speed = 2;
     let gameOver = false;
@@ -123,7 +151,7 @@
     function drawScore() {
       ctx.fillStyle = 'black';
       ctx.font = '20px sans-serif';
-      ctx.fillText(`Score: ${Math.floor(score)}`, 10, 30);
+      ctx.fillText(`Оноо: ${Math.floor(score)}`, 10, 30);
       score += 1 / 60;
     }
 
@@ -138,7 +166,7 @@
     }
 
     function spawnObstacle() {
-      const size = 32;
+      const size = 128; // 4 дахин томруулсан
       const x = Math.random() * (canvas.width - size);
       obstacles.push({ x, y: -size, width: size, height: size });
     }
@@ -167,9 +195,22 @@
       balloon.y = Math.max(0, Math.min(e.clientY - balloon.height / 2, canvas.height - balloon.height));
     });
 
-    document.querySelector('.menu-button.play').addEventListener('click', resetGame);
-    document.querySelector('.menu-button img[alt="Skins"]').parentNode.addEventListener('click', () => {
-      alert('Skins menu: Change balloon appearance (not implemented).');
+    // Менюны давхаргын удирдлага
+    document.querySelectorAll('.menu-button').forEach(button => {
+      button.addEventListener('click', () => {
+        const layerId = button.dataset.layer;
+        if (layerId === 'play-layer') {
+          resetGame();
+        } else {
+          document.getElementById(layerId).style.display = 'flex';
+        }
+      });
+    });
+
+    document.querySelectorAll('.menu-layer button').forEach(button => {
+      button.addEventListener('click', () => {
+        button.parentNode.style.display = 'none';
+      });
     });
 
     let imagesLoaded = 0;
@@ -182,8 +223,8 @@
     }
     balloonImg.onload = checkImagesLoaded;
     obstacleImg.onload = checkImagesLoaded;
-    balloonImg.onerror = () => alert('Failed to load balloon.png');
-    obstacleImg.onerror = () => alert('Failed to load obstacle.png');
+    balloonImg.onerror = () => alert('Бөмбөлгийн зураг ачааллахад алдаа гарлаа');
+    obstacleImg.onerror = () => alert('Саад баригчийн зураг ачааллахад алдаа гарлаа');
   </script>
 </body>
 </html>
