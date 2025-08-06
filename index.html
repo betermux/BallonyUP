@@ -23,6 +23,7 @@
       top: 0;
       left: 0;
       z-index: 1;
+      touch-action: none; /* Touch event-ийн хариу үйлдлийг сайжруулах */
     }
     .bottom-menu {
       position: fixed;
@@ -116,8 +117,7 @@
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      // Бөмбөлгийн байрлалыг дахин тохируулах
-      balloon.y = canvas.height - 200; // Дэлгэцийн доод хэсэгт
+      balloon.y = canvas.height - 200; // Бөмбөлөг доод хэсэгт
       balloon.x = canvas.width / 2 - balloon.width / 2;
     }
     window.addEventListener('resize', resizeCanvas);
@@ -128,7 +128,7 @@
     const obstacleImg = new Image();
     obstacleImg.src = 'assets/obstacle.png';
 
-    let balloon = { x: canvas.width / 2 - 80, y: canvas.height - 200, width: 160, height: 160 }; // Доод хэсэгт
+    let balloon = { x: canvas.width / 2 - 80, y: canvas.height - 200, width: 160, height: 160 };
     let obstacles = [];
     let speed = 2;
     let gameOver = false;
@@ -136,8 +136,7 @@
     let lastTime = 0;
     let spawnInterval;
     let isPlaying = false;
-
-    const menuBalloonSize = 480; // Меню дээрх бөмбөлгийн хэмжээ
+    const menuBalloonSize = Math.min(canvas.width * 0.8, 480); // Меню дээрх бөмбөлгийн хэмжээ
 
     // Зургийн пикселийн өгөгдөл
     let balloonPixelData, obstaclePixelData;
@@ -145,14 +144,21 @@
     const offscreenCtx = offscreenCanvas.getContext('2d');
 
     function getPixelData(img, width, height) {
-      offscreenCanvas.width = width;
-      offscreenCanvas.height = height;
-      offscreenCtx.clearRect(0, 0, width, height);
-      offscreenCtx.drawImage(img, 0, 0, width, height);
-      return offscreenCtx.getImageData(0, 0, width, height).data;
+      try {
+        offscreenCanvas.width = width;
+        offscreenCanvas.height = height;
+        offscreenCtx.clearRect(0, 0, width, height);
+        offscreenCtx.drawImage(img, 0, 0, width, height);
+        return offscreenCtx.getImageData(0, 0, width, height).data;
+      } catch (e) {
+        console.error('Зургийн пикселийн өгөгдөл авахад алдаа гарлаа:', e);
+        return null;
+      }
     }
 
     function checkPixelCollision(x1, y1, w1, h1, pixelData1, x2, y2, w2, h2, pixelData2) {
+      if (!pixelData1 || !pixelData2) return false; // Зургийн өгөгдөл байхгүй бол
+
       const rect1 = { x: x1, y: y1, w: w1, h: h1 };
       const rect2 = { x: x2, y: y2, w: w2, h: h2 };
 
@@ -219,6 +225,7 @@
     }
 
     function gameLoop(time) {
+      if (gameOver) return;
       lastTime = time;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawBalloon();
@@ -237,7 +244,7 @@
       gameOver = false;
       isPlaying = true;
       balloon.x = canvas.width / 2 - balloon.width / 2;
-      balloon.y = canvas.height - 200; // Дэлгэцийн доод хэсэгт
+      balloon.y = canvas.height - 200;
       obstacles = [];
       score = 0;
       document.getElementById('game-over').style.display = 'none';
@@ -253,16 +260,35 @@
         e.preventDefault();
         let touch = e.touches[0];
         balloon.x = Math.max(0, Math.min(touch.clientX - balloon.width / 2, canvas.width - balloon.width));
-        // y тэнхлэгт хөдөлгөөнгүй
       }
     });
 
-    canvas.addEventListener('mousemove', function(e) {
+    canvas.addEventListener('touchstart', function(e) {
       if (isPlaying) {
-        balloon.x = Math.max(0, Math.min(e.clientX - balloon.width / 2, canvas.width - balloon.width));
-        // y тэнхлэгт хөдөлгөөнгүй
+        e.preventDefault();
+        let touch = e.touches[0];
+        balloon.x = Math.max(0, Math.min(touch.clientX - balloon.width / 2, canvas.width - balloon.width));
       }
     });
+
+    let imagesLoaded = 0;
+    function checkImagesLoaded() {
+      imagesLoaded++;
+      if (imagesLoaded === 2) {
+        balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
+        obstaclePixelData = getPixelData(obstacleImg, 96, 96);
+        if (!balloonPixelData || !obstaclePixelData) {
+          alert('Зургийн өгөгдөл ачааллахад алдаа гарлаа. Зургуудын байршлыг шалгана уу.');
+          return;
+        }
+        gameLoop();
+      }
+    }
+
+    balloonImg.onload = checkImagesLoaded;
+    obstacleImg.onload = checkImagesLoaded;
+    balloonImg.onerror = () => alert('Бөмбөлгийн зураг (assets/balloon.png) ачааллахад алдаа гарлаа. Зургийн байршлыг шалгана уу.');
+    obstacleImg.onerror = () => alert('Саад баригчийн зураг (assets/obstacle.png) ачааллахад алдаа гарлаа. Зургийн байршлыг шалгана уу.');
 
     document.querySelectorAll('.menu-button').forEach(button => {
       button.addEventListener('click', () => {
@@ -282,20 +308,6 @@
         button.parentNode.style.display = 'none';
       });
     });
-
-    let imagesLoaded = 0;
-    function checkImagesLoaded() {
-      imagesLoaded++;
-      if (imagesLoaded === 2) {
-        balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
-        obstaclePixelData = getPixelData(obstacleImg, 96, 96);
-        gameLoop();
-      }
-    }
-    balloonImg.onload = checkImagesLoaded;
-    obstacleImg.onload = checkImagesLoaded;
-    balloonImg.onerror = () => alert('Бөмбөлгийн зураг ачааллахад алдаа гарлаа');
-    obstacleImg.onerror = () => alert('Саад баригчийн зураг ачааллахад алдаа гарлаа');
   </script>
 </body>
 </html>
