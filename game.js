@@ -1,6 +1,13 @@
-
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+
+// Set canvas to fixed resolution
+canvas.width = 800;
+canvas.height = 600;
+
+// Load Telegram WebApp
+const Telegram = window.Telegram.WebApp;
+Telegram.ready();
 
 // Load assets
 const balloonImg = new Image();
@@ -13,29 +20,41 @@ restartImg.src = 'assets/restart.png';
 // Game variables
 let balloon = {
     x: canvas.width / 2,
-    y: canvas.height - 100,
-    width: 50,
-    height: 80,
-    vy: -2, // Upward velocity (floating up)
-    vx: 0,  // Horizontal velocity (affected by drag)
-    drag: 0.95 // Drag factor (slows horizontal movement)
+    y: 500,
+    width: null,
+    height: null,
+    vy: -2,
+    vx: 0,
+    drag: 0.95
 };
 let clouds = [];
 let gameOver = false;
 let isDragging = false;
 let score = 0;
+let cameraY = 0;
 
 // Cloud spawn settings
 const cloudSpawnRate = 100;
 let cloudSpawnTimer = 0;
 
-// Mouse event listeners
-canvas.addEventListener('mousedown', (e) => {
+// Event listeners
+canvas.addEventListener('mousedown', handleStart);
+canvas.addEventListener('touchstart', handleStart, { passive: false });
+canvas.addEventListener('mousemove', handleMove);
+canvas.addEventListener('touchmove', handleMove, { passive: false });
+canvas.addEventListener('mouseup', handleEnd);
+canvas.addEventListener('touchend', handleEnd);
+
+function handleStart(e) {
+    e.preventDefault();
     if (gameOver) {
-        // Check if restart button is clicked
         const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = (e.type === 'touchstart' ? e.touches[0].clientX : e.clientX) - rect.left;
+        const y = (e.type === 'touchstart' ? e.touches[0].clientY : e.clientY) - rect.top;
+        const mouseX = x * scaleX;
+        const mouseY = y * scaleY;
         const restartBtn = { x: canvas.width / 2 - 50, y: canvas.height / 2, width: 100, height: 50 };
         if (
             mouseX >= restartBtn.x &&
@@ -48,32 +67,36 @@ canvas.addEventListener('mousedown', (e) => {
     } else {
         isDragging = true;
     }
-});
-canvas.addEventListener('mousemove', (e) => {
+}
+
+function handleMove(e) {
     if (isDragging && !gameOver) {
+        e.preventDefault();
         const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        // Apply force to balloon's horizontal velocity based on mouse position
-        balloon.vx += (mouseX - balloon.x) * 0.05; // Adjust sensitivity
+        const scaleX = canvas.width / rect.width;
+        const x = (e.type === 'touchmove' ? e.touches[0].clientX : e.clientX) - rect.left;
+        const mouseX = x * scaleX;
+        balloon.vx += (mouseX - balloon.x) * 0.05;
     }
-});
-canvas.addEventListener('mouseup', () => {
+}
+
+function handleEnd() {
     isDragging = false;
-});
+}
 
 // Spawn clouds
 function spawnCloud() {
     const cloud = {
-        x: Math.random() * (canvas.width - 100),
-        y: -100,
-        width: 100,
-        height: 60,
-        vy: 2 // Clouds move downward
+        x: Math.random() * (canvas.width - cloudImg.width),
+        y: cameraY - cloudImg.height,
+        width: cloudImg.width,
+        height: cloudImg.height,
+        vy: 2
     };
     clouds.push(cloud);
 }
 
-// Check collision between balloon and cloud
+// Check collision
 function checkCollision(balloon, cloud) {
     return (
         balloon.x < cloud.x + cloud.width &&
@@ -86,10 +109,11 @@ function checkCollision(balloon, cloud) {
 // Reset game
 function resetGame() {
     balloon.x = canvas.width / 2;
-    balloon.y = canvas.height - 100;
+    balloon.y = 500;
     balloon.vx = 0;
     clouds = [];
     score = 0;
+    cameraY = 0;
     gameOver = false;
 }
 
@@ -97,13 +121,16 @@ function resetGame() {
 function update() {
     if (!gameOver) {
         // Update balloon
-        balloon.y += balloon.vy; // Float upward
-        balloon.x += balloon.vx; // Move horizontally
-        balloon.vx *= balloon.drag; // Apply drag to horizontal velocity
+        balloon.y += balloon.vy;
+        balloon.x += balloon.vx;
+        balloon.vx *= balloon.drag;
 
         // Keep balloon in bounds
         if (balloon.x < 0) balloon.x = 0;
         if (balloon.x + balloon.width > canvas.width) balloon.x = canvas.width - balloon.width;
+
+        // Update camera
+        cameraY = Math.max(0, balloon.y - canvas.height / 2);
 
         // Spawn clouds
         cloudSpawnTimer++;
@@ -113,18 +140,16 @@ function update() {
         }
 
         // Update clouds
-        clouds.forEach((cloud, index) => {
+        clouds = clouds.filter(cloud => cloud.y < cameraY + canvas.height + cloud.height);
+        clouds.forEach(cloud => {
             cloud.y += cloud.vy;
-            // Remove clouds that go off-screen
-            if (cloud.y > canvas.height) {
-                clouds.splice(index, 1);
-                score++;
-            }
-            // Check for collision
             if (checkCollision(balloon, cloud)) {
                 gameOver = true;
             }
         });
+
+        // Update score
+        score = Math.floor(cameraY / 100);
     }
 
     // Draw
@@ -132,18 +157,18 @@ function update() {
     
     // Draw clouds
     clouds.forEach(cloud => {
-        ctx.drawImage(cloudImg, cloud.x, cloud.y, cloud.width, cloud.height);
+        ctx.drawImage(cloudImg, cloud.x, cloud.y - cameraY, cloud.width, cloud.height);
     });
 
     // Draw balloon
-    ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
+    ctx.drawImage(balloonImg, balloon.x, balloon.y - cameraY, balloon.width, balloon.height);
 
     // Draw score
     ctx.fillStyle = 'black';
     ctx.font = '20px Arial';
     ctx.fillText(`Score: ${score}`, 10, 30);
 
-    // Draw game over and restart button
+    // Draw game over
     if (gameOver) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -153,15 +178,20 @@ function update() {
     requestAnimationFrame(update);
 }
 
-// Start game when assets are loaded
+// Wait for assets to load
 let assetsLoaded = 0;
 const totalAssets = 3;
 function checkAssetsLoaded() {
     assetsLoaded++;
     if (assetsLoaded === totalAssets) {
+        balloon.width = balloonImg.width;
+        balloon.height = balloonImg.height;
         update();
     }
 }
 balloonImg.onload = checkAssetsLoaded;
 cloudImg.onload = checkAssetsLoaded;
 restartImg.onload = checkAssetsLoaded;
+
+// Initialize Telegram WebApp
+Telegram.expand();
