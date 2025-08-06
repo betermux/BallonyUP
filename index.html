@@ -81,12 +81,19 @@
       for (let obs of obstacles) {
         obs.y += obs.speed;
 
-        // Collision check
+        // Collision check with smaller hitbox (3x smaller)
+        const hitboxPadding = obs.size * 0.66;
+        const hitbox = {
+          x: obs.x + hitboxPadding / 2,
+          y: obs.y + hitboxPadding / 2,
+          size: obs.size / 3
+        };
+
         if (
-          balloon.x < obs.x + obs.size &&
-          balloon.x + balloon.width > obs.x &&
-          balloon.y < obs.y + obs.size &&
-          balloon.y + balloon.height > obs.y
+          balloon.x < hitbox.x + hitbox.size &&
+          balloon.x + balloon.width > hitbox.x &&
+          balloon.y < hitbox.y + hitbox.size &&
+          balloon.y + balloon.height > hitbox.y
         ) {
           gameOver = true;
         }
