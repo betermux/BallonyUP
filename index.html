@@ -150,7 +150,7 @@
     const obstacleImg = new Image();
     obstacleImg.src = 'assets/obstacle.png';
 
-    let balloon = { x: canvas.width / 2 - 80, y: canvas.height / 2, width: 160, height: 160, vx: 2 };
+    let balloon = { x: canvas.width / 2 - 80, y: canvas.height / 2, width: 160, height: 160 };
     let obstacles = [];
     let speed = 2;
     let gameOver = false;
@@ -235,17 +235,10 @@
       updateWallet();
     }
 
-    function updateBalloon(deltaTime) {
-      if (isPlaying) {
-        balloon.x += balloon.vx * upgrades.speed;
-        if (balloon.x + balloon.width > canvas.width || balloon.x < 0) {
-          balloon.vx = -balloon.vx;
-        }
-      } else {
-        balloon.x += balloon.vx;
-        if (balloon.x + menuBalloonSize > canvas.width || balloon.x < 0) {
-          balloon.vx = -balloon.vx;
-        }
+    function updateBalloon() {
+      // Автомат хөдөлгөөн хасагдсан, зөвхөн drag-аар хөдөлнө
+      if (!isPlaying) {
+        balloon.x = canvas.width / 2 - menuBalloonSize / 2; // Меню дээр бөмбөлөг төвд байрлана
       }
     }
 
@@ -253,7 +246,7 @@
       const deltaTime = lastTime ? (time - lastTime) / 1000 : 1/60;
       lastTime = time;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      updateBalloon(deltaTime);
+      updateBalloon();
       drawBalloon();
       drawObstacles(deltaTime);
       drawScore();
@@ -269,7 +262,6 @@
     function saveGameState() {
       localStorage.setItem(`tokens_${userId}`, tokens);
       localStorage.setItem(`score_${userId}`, score);
-      // TODO: Серверт илгээх (Firebase эсвэл API)
     }
 
     function updateWallet() {
@@ -293,7 +285,7 @@
       if (tokens >= cost) {
         tokens -= cost;
         if (type === 'speed') {
-          upgrades.speed += 0.1; // Хурдыг 10%-иар нэмэгдүүлнэ
+          upgrades.speed += 0.1; // Хурдны сайжруулалт
         }
         updateWallet();
         saveGameState();
@@ -308,7 +300,6 @@
       isPlaying = true;
       balloon.x = canvas.width / 2 - balloon.width / 2;
       balloon.y = canvas.height / 2 - balloon.height / 2;
-      balloon.vx = 2;
       obstacles = [];
       score = 0;
       document.getElementById('game-over').style.display = 'none';
@@ -324,15 +315,14 @@
         e.preventDefault();
         let touch = e.touches[0];
         balloon.x = Math.max(0, Math.min(touch.clientX - balloon.width / 2, canvas.width - balloon.width));
-        balloon.y = Math.max(0, Math.min(touch.clientY - balloon.height / 2, canvas.height - balloon.height));
-        if ('vibrate' in navigator) navigator.vibrate(10);
+        // y тэнхлэгийн хөдөлгөөнийг хасах (зөвхөн зүүн, баруун)
       }
     }, { passive: false });
 
     canvas.addEventListener('mousemove', function(e) {
       if (isPlaying) {
         balloon.x = Math.max(0, Math.min(e.clientX - balloon.width / 2, canvas.width - balloon.width));
-        balloon.y = Math.max(0, Math.min(e.clientY - balloon.height / 2, canvas.height - balloon.height));
+        // y тэнхлэгийн хөдөлгөөнийг хасах (зөвхөн зүүн, баруун)
       }
     });
 
@@ -372,8 +362,7 @@
     balloonImg.onerror = () => tg.showAlert('Бөмбөлгийн зураг ачааллахад алдаа гарлаа');
     obstacleImg.onerror = () => tg.showAlert('Саад баригчийн зураг ачааллахад алдаа гарлаа');
 
-    // Telegram-ийн товчны интеграцчлал
-    tg.MainButton.setText('Тоглоом эхлүүлэх').show().onClick(resetGame);
+    // Telegram BackButton-г хадгалах
     tg.BackButton.onClick(() => {
       document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
     });
