@@ -44,17 +44,16 @@
     canvas.height = window.innerHeight;
 
     const balloonImg = new Image();
-    balloonImg.src = "assets/balloon.png";
+    balloonImg.src = "assets/balloon.png"; // Зургийн зам
 
     let balloon = {
-      x: canvas.width / 2 - 32,
-      y: canvas.height - 120,
-      width: 64,
-      height: 64,
-      speed: 6
+      x: canvas.width / 2 - 80, // 160 / 2
+      y: canvas.height - 180,
+      width: 160,
+      height: 160,
+      speed: 8
     };
 
-    let obstacles = [];
     let score = 0;
     let gameOver = false;
 
@@ -83,7 +82,7 @@
       if (e.key === "ArrowRight") right = false;
     });
 
-    // 🟢 Touch control
+    // 🟢 Touch control (drag)
     let touchStartX = null;
 
     canvas.addEventListener("touchstart", (e) => {
