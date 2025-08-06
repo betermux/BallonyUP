@@ -58,14 +58,18 @@
       width: 48px;
       height: 48px;
     }
-    #game-over {
+    #back-button {
       position: absolute;
       top: 40%;
-      width: 100%;
-      text-align: center;
-      font-size: 36px;
-      color: red;
-      font-weight: bold;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 15px 30px;
+      font-size: 24px;
+      background: #ff4444;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
       z-index: 2;
       display: none;
     }
@@ -117,7 +121,7 @@
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
-  <div id="game-over">Game Over</div>
+  <button id="back-button">Back to Menu</button>
   <div class="bottom-menu" id="bottom-menu">
     <div class="menu-button" data-layer="skins-layer"><img src="assets/skins.png" alt="Skins"></div>
     <div class="menu-button play" data-layer="play-layer"><img src="assets/play.png" alt="Play"></div>
@@ -157,6 +161,7 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const bottomMenu = document.getElementById('bottom-menu');
+    const backButton = document.getElementById('back-button');
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -242,12 +247,12 @@
           )
         ) {
           gameOver = true;
-          document.getElementById('game-over').style.display = 'block';
-          bottomMenu.style.display = 'block';
+          backButton.style.display = 'block'; // Буцах товчийг харуулах
+          bottomMenu.style.display = 'none'; // Цэсийг нуух
           isPlaying = false;
           updateTasks();
           saveGameState();
-          // Хожигдох үед Skins цэсийг харуулах
+          // Skins цэсийг харуулах
           document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
           document.getElementById('skins-layer').style.display = 'flex';
         }
@@ -355,7 +360,7 @@
       balloon.y = canvas.height / 2 - balloon.height / 2;
       obstacles = [];
       score = 0;
-      document.getElementById('game-over').style.display = 'none';
+      backButton.style.display = 'none';
       bottomMenu.style.display = 'none';
       document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
       clearInterval(spawnInterval);
@@ -400,6 +405,12 @@
       });
     });
 
+    backButton.addEventListener('click', () => {
+      backButton.style.display = 'none';
+      bottomMenu.style.display = 'flex'; // Цэсийг буцааж харуулах
+      document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
+    });
+
     let imagesLoaded = 0;
     function checkImagesLoaded() {
       imagesLoaded++;
@@ -418,6 +429,7 @@
 
     tg.BackButton.onClick(() => {
       document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
+      bottomMenu.style.display = 'flex';
     });
   </script>
 </body>
