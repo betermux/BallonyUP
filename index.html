@@ -2,94 +2,118 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Hot Air Balloon Game</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
-      background: linear-gradient(skyblue, white);
     }
+
+    #game {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(#87ceeb, #ffffff);
+      animation: scrollBg 10s linear infinite;
+      overflow: hidden;
+    }
+
+    @keyframes scrollBg {
+      0% {
+        background-position: 0 0;
+      }
+      100% {
+        background-position: 0 100%;
+      }
+    }
+
     #balloon {
       position: absolute;
       width: 80px;
       height: 80px;
-      left: 100px;
-      top: 200px;
-      z-index: 10;
+      left: 50%;
+      bottom: 20%;
+      transform: translateX(-50%);
+      transition: left 0.1s ease;
     }
+
     .obstacle {
       position: absolute;
       width: 80px;
       height: 80px;
-      bottom: 0;
-      animation: moveLeft 5s linear infinite;
-    }
-    @keyframes moveLeft {
-      0% { left: 100%; }
-      100% { left: -100px; }
-    }
-    .bg-scroll {
-      position: absolute;
-      width: 200%;
-      height: 100%;
-      background: repeating-linear-gradient(white, white 50px, lightgray 50px, lightgray 100px);
-      animation: bgScroll 10s linear infinite;
-      z-index: -1;
-    }
-    @keyframes bgScroll {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
     }
   </style>
 </head>
 <body>
-  <div class="bg-scroll"></div>
-  <img id="balloon" src="balloon.png" alt="balloon" />
+  <div id="game">
+    <img id="balloon" src="balloon.png" />
+  </div>
 
   <script>
+    const game = document.getElementById("game");
     const balloon = document.getElementById("balloon");
-    let y = 200;
 
-    let drag = false;
-    window.addEventListener("mousedown", () => drag = true);
-    window.addEventListener("mouseup", () => drag = false);
-    window.addEventListener("mousemove", (e) => {
-      if (drag) {
-        y = e.clientY - 40;
-        balloon.style.top = y + "px";
-      }
+    // Drag / Slide control
+    let isDragging = false;
+    let startX = 0;
+
+    game.addEventListener("touchstart", e => {
+      isDragging = true;
+      startX = e.touches[0].clientX;
     });
 
+    game.addEventListener("touchmove", e => {
+      if (!isDragging) return;
+      const moveX = e.touches[0].clientX - startX;
+      const currentLeft = balloon.offsetLeft;
+      let newLeft = currentLeft + moveX;
+
+      newLeft = Math.max(0, Math.min(game.clientWidth - balloon.clientWidth, newLeft));
+      balloon.style.left = newLeft + "px";
+
+      startX = e.touches[0].clientX;
+    });
+
+    game.addEventListener("touchend", () => {
+      isDragging = false;
+    });
+
+    // Create Obstacle
     function createObstacle() {
       const obs = document.createElement("img");
       obs.src = "obstacle.png";
       obs.classList.add("obstacle");
-      obs.style.left = "100%";
-      obs.style.bottom = Math.random() * 400 + "px";
-      document.body.appendChild(obs);
+      obs.style.left = Math.random() * (game.clientWidth - 80) + "px";
+      obs.style.top = "-80px";
 
+      game.appendChild(obs);
+
+      let y = -80;
       const fall = setInterval(() => {
+        y += 4;
+        obs.style.top = y + "px";
+
+        // Collision check
         const balloonRect = balloon.getBoundingClientRect();
         const obsRect = obs.getBoundingClientRect();
-        const margin = 20; // Collision box багасгасан
 
         if (
-          balloonRect.left + margin < obsRect.right - margin &&
-          balloonRect.right - margin > obsRect.left + margin &&
-          balloonRect.top + margin < obsRect.bottom - margin &&
-          balloonRect.bottom - margin > obsRect.top + margin
+          balloonRect.left < obsRect.right &&
+          balloonRect.right > obsRect.left &&
+          balloonRect.top < obsRect.bottom &&
+          balloonRect.bottom > obsRect.top
         ) {
           alert("💥 Game Over!");
           clearInterval(fall);
           obs.remove();
         }
 
-        if (obs.getBoundingClientRect().left < -100) {
+        if (y > game.clientHeight) {
           clearInterval(fall);
           obs.remove();
         }
-      }, 30);
+      }, 16);
     }
 
     setInterval(createObstacle, 2000);
