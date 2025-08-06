@@ -1,254 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Balloon Dodge Game</title>
+  <meta charset="UTF-8">
+  <title>Balloon Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <style>
     * {
-      box-sizing: border-box;
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+      user-select: none;
     }
 
-    body {
+    html, body {
+      width: 100%;
+      height: 100%;
       overflow: hidden;
-      background: linear-gradient(#87ceeb, #fff);
+      background: #aee1f9;
       font-family: sans-serif;
     }
 
     canvas {
-      display: block;
-      touch-action: none;
-    }
-
-    #score {
       position: absolute;
-      top: 10px;
-      left: 10px;
-      color: #333;
-      font-size: 24px;
-      font-weight: bold;
+      top: 0;
+      left: 0;
+      z-index: 1;
     }
 
-    #mainMenu {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: url('assets/bg.png') no-repeat center center;
-      background-size: cover;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #mainMenu button {
-      margin: 10px;
-      background: none;
-      border: none;
-      cursor: pointer;
-    }
-
-    #mainMenu img {
-      width: 80px;
-      height: auto;
-    }
-
-    #title {
-      font-size: 3rem;
-      color: #fff;
-      margin-bottom: 30px;
-      text-shadow: 2px 2px #000;
-    }
-
-    #bottomMenu {
-      position: absolute;
+    .bottom-menu {
+      position: fixed;
       bottom: 0;
       width: 100%;
+      height: 64px;
+      background: rgba(255, 255, 255, 0.8);
       display: flex;
-      justify-content: space-around;
-      background-color: rgba(0, 0, 0, 0.5);
-      padding: 10px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 10px;
+      z-index: 2;
     }
 
-    #bottomMenu button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 10px;
-      color: #fff;
+    .menu-button {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    #playBtn {
-      flex: 2;
+    .menu-button img {
+      width: 32px;
+      height: 32px;
     }
 
-    #gameOver {
+    .menu-button.play {
+      flex: 1.5;
+    }
+
+    #game-over {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 3rem;
-      color: #fff;
-      text-shadow: 2px 2px #000;
-    }
-
-    #gameCanvas {
+      top: 40%;
+      width: 100%;
+      text-align: center;
+      font-size: 36px;
+      color: red;
+      font-weight: bold;
+      z-index: 2;
       display: none;
     }
   </style>
 </head>
 <body>
-  <div id="mainMenu">
-    <h1 id="title">🎈 Hot Air Balloon</h1>
-    <button id="playBtn"><img src="assets/play.png" alt="Play" /></button>
-    <button id="settingsBtn"><img src="assets/settings.png" alt="Settings" /></button>
-    <button id="leaderboardBtn"><img src="assets/leaderboard.png" alt="Leaderboard" /></button>
-  </div>
+  <canvas id="gameCanvas" width="window.innerWidth" height="window.innerHeight"></canvas>
 
-  <div id="gameContainer" style="display:none;">
-    <canvas id="gameCanvas"></canvas>
-    <div id="score">Score: 0</div>
-    <div id="gameOver" style="display:none;">Game Over!</div>
-    <div id="bottomMenu">
-      <button id="skinsBtn"><img src="assets/skins.png" alt="Skins" /></button>
-      <button id="shopBtn"><img src="assets/shop.png" alt="Shop" /></button>
-      <button id="playBtn"><img src="assets/play.png" alt="Play" /></button>
-      <button id="upgradeBtn"><img src="assets/upgrade.png" alt="Upgrade" /></button>
-      <button id="walletBtn"><img src="assets/wallet.png" alt="Wallet" /></button>
-    </div>
+  <div id="game-over">Game Over</div>
+
+  <div class="bottom-menu">
+    <div class="menu-button"><img src="assets/skins.png" alt="Skins"></div>
+    <div class="menu-button"><img src="assets/shop.png" alt="Shop"></div>
+    <div class="menu-button play"><img src="assets/play.png" alt="Play"></div>
+    <div class="menu-button"><img src="assets/upgrade.png" alt="Upgrade"></div>
+    <div class="menu-button"><img src="assets/wallet.png" alt="Wallet"></div>
   </div>
 
   <script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
     const balloonImg = new Image();
-    balloonImg.src = "assets/balloon.png";
+    balloonImg.src = 'assets/balloon.png';
 
     const obstacleImg = new Image();
-    obstacleImg.src = "assets/obstacle.png";
+    obstacleImg.src = 'assets/obstacle.png';
 
-    let balloon = {
-      x: canvas.width / 2 - 80,
-      y: canvas.height - 180,
-      width: 160,
-      height: 160,
-      speed: 8
-    };
-
+    let balloon = { x: canvas.width / 2 - 16, y: canvas.height / 2, width: 32, height: 32 };
     let obstacles = [];
-    let score = 0;
+    let speed = 2;
     let gameOver = false;
 
     function drawBalloon() {
       ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
     }
 
-    function createObstacle() {
-      const size = 64;
-      const x = Math.random() * (canvas.width - size);
-      obstacles.push({ x, y: -size, size, speed: 5 });
-    }
-
     function drawObstacles() {
-      for (let obs of obstacles) {
-        ctx.drawImage(obstacleImg, obs.x, obs.y, obs.size, obs.size);
-      }
-    }
+      for (let i = 0; i < obstacles.length; i++) {
+        const obs = obstacles[i];
+        obs.y += speed;
+        ctx.drawImage(obstacleImg, obs.x, obs.y, obs.width, obs.height);
 
-    function updateObstacles() {
-      for (let obs of obstacles) {
-        obs.y += obs.speed;
-
-        // Collision check
+        // Collision
         if (
-          balloon.x < obs.x + obs.size &&
+          balloon.x < obs.x + obs.width &&
           balloon.x + balloon.width > obs.x &&
-          balloon.y < obs.y + obs.size &&
+          balloon.y < obs.y + obs.height &&
           balloon.y + balloon.height > obs.y
         ) {
           gameOver = true;
+          document.getElementById('game-over').style.display = 'block';
         }
       }
 
       obstacles = obstacles.filter(obs => obs.y < canvas.height);
     }
 
-    function drawScore() {
-      document.getElementById("score").textContent = "Score: " + score;
-    }
-
-    let left = false, right = false;
-
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowLeft") left = true;
-      if (e.key === "ArrowRight") right = true;
-    });
-
-    window.addEventListener("keyup", (e) => {
-      if (e.key === "ArrowLeft") left = false;
-      if (e.key === "ArrowRight") right = false;
-    });
-
-    // Touch control
-    let touchStartX = null;
-
-    canvas.addEventListener("touchstart", (e) => {
-      touchStartX = e.touches[0].clientX;
-    });
-
-    canvas.addEventListener("touchmove", (e) => {
-      if (touchStartX === null) return;
-      const touchX = e.touches[0].clientX;
-      const dx = touchX - touchStartX;
-      balloon.x += dx;
-      touchStartX = touchX;
-
-      if (balloon.x < 0) balloon.x = 0;
-      if (balloon.x + balloon.width > canvas.width) balloon.x = canvas.width - balloon.width;
-    });
-
-    canvas.addEventListener("touchend", () => {
-      touchStartX = null;
-    });
-
     function gameLoop() {
-      if (gameOver) {
-        document.getElementById("gameOver").style.display = "block";
-        return;
-      }
-
+      if (gameOver) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      moveBalloon();
       drawBalloon();
       drawObstacles();
-      updateObstacles();
-
-      score++;
-      drawScore();
 
       requestAnimationFrame(gameLoop);
     }
 
-    function moveBalloon() {
-      if (left && balloon.x > 0) balloon.x -= balloon.speed;
-      if (right && balloon.x + balloon.width < canvas.width) balloon.x += balloon.speed;
+    function spawnObstacle() {
+      const size = 32;
+      const x = Math.random() * (canvas.width - size);
+      obstacles.push({ x, y: -size, width: size, height: size });
     }
 
-    // Play button logic
-    document.getElementById("playBtn").onclick = () => {
-      document.getElementById("mainMenu").style.display = "none";
-      document.getElementById("gameContainer").style.display = "block";
+    setInterval(spawnObstacle, 1500);
+
+    canvas.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      let touch = e.touches[0];
+      balloon.x = touch.clientX - balloon.width / 2;
+      balloon.y = touch.clientY - balloon.height / 2;
+    });
+
+    balloonImg.onload = () => {
       gameLoop();
     };
-
-    setInterval(createObstacle, 1200);
   </script>
 </body>
 </html>
