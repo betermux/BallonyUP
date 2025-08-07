@@ -5,6 +5,7 @@
   <title>Balloon Game</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -17,7 +18,7 @@
       height: 100%;
       overflow: hidden;
       background: #aee1f9; /* Тоглоомын явцын дэвсгэр өнгө */
-      font-family: sans-serif;
+      font-family: 'Press Start 2P', cursive;
     }
     canvas {
       position: absolute;
@@ -78,14 +79,15 @@
       left: 50%;
       transform: translateX(-50%);
       padding: 15px 30px;
-      font-size: 24px;
+      font-size: 16px; /* Pixel фонтод тохируулж жижигрүүлсэн */
       background: #ff4444;
       color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: 5px;
       cursor: pointer;
       z-index: 2;
       display: none;
+      font-family: 'Press Start 2P', cursive;
     }
     .menu-layer {
       position: fixed;
@@ -98,9 +100,10 @@
       justify-content: center;
       align-items: center;
       color: white;
-      font-size: 24px;
+      font-size: 16px; /* Pixel фонтод тохируулсан */
       z-index: 3;
       transition: opacity 0.3s ease;
+      font-family: 'Press Start 2P', cursive;
     }
     .menu-layer.active {
       opacity: 1;
@@ -108,12 +111,13 @@
     }
     .menu-layer button {
       padding: 10px;
-      font-size: 18px;
+      font-size: 14px; /* Pixel фонтод тохируулсан */
       cursor: pointer;
       margin: 10px;
       background: #ffcc00;
       border: none;
       border-radius: 5px;
+      font-family: 'Press Start 2P', cursive;
     }
     .menu-layer .back-button {
       position: absolute;
@@ -129,7 +133,7 @@
     }
     .menu-layer li {
       padding: 5px;
-      font-size: 18px;
+      font-size: 14px; /* Pixel фонтод тохируулсан */
     }
     .score-display {
       position: fixed;
@@ -139,8 +143,8 @@
       align-items: center;
       z-index: 2;
       color: white;
-      font-size: 20px;
-      font-weight: bold;
+      font-size: 16px; /* Pixel фонтод тохируулсан */
+      font-family: 'Press Start 2P', cursive;
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     }
     .score-display img {
@@ -243,7 +247,7 @@
 
     // Бөмбөлгийн хөдөлгөөний хувьсагчууд
     let balloonY = canvas.height / 2;
-    const balloonAmplitude = 10; // Дээш доош хөдөлгөөний хэмжээ (100 -> 10, маш жижиг)
+    const balloonAmplitude = 10; // Дээш доош хөдөлгөөний хэмжээ (маш жижиг)
     const balloonFrequency = 0.002; // Хөдөлгөөний хурд
 
     // Дэвсгэрийн хөдөлгөөний хувьсагчууд
@@ -256,7 +260,7 @@
       clouds.push({
         img: i % 3 === 0 ? cloudImg : (i % 3 === 1 ? cloud1Img : cloud2Img),
         x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
+        y: Math.random() * canvas.height / 2, // Зөвхөн дээд хагас
         size: 50 + Math.random() * 100, // 50-150px хэмжээтэй
         speed: 10 + Math.random() * 20, // 10-30px/s хурд
         zIndex: Math.random() < 0.5 ? 'front' : 'back' // Наагуур эсвэл цаагуур
@@ -323,7 +327,7 @@
           cloud.x -= cloud.speed * deltaTime;
           if (cloud.x <= -cloud.size) {
             cloud.x = canvas.width; // Баруун талаас дахин гарч ирнэ
-            cloud.y = Math.random() * canvas.height; // Шинэ санамсаргүй байрлал
+            cloud.y = Math.random() * canvas.height / 2; // Дээд хагасын шинэ байрлал
           }
           // Цаагуурх үүлнүүдийг эхлээд зурчихна
           if (cloud.zIndex === 'back') {
@@ -354,35 +358,13 @@
       }
     }
 
-    function drawObstacles(deltaTime) {
-      if (!isPlaying) return;
-      for (let obs of obstacles) {
-        obs.y += speed * deltaTime * 60;
-        ctx.drawImage(obstacleImg, obs.x, obs.y, obs.width, obs.height);
-        if (
-          checkPixelCollision(
-            balloon.x, balloon.y, balloon.width, balloon.height, balloonPixelData,
-            obs.x, obs.y, obs.width, obs.height, obstaclePixelData
-          )
-        ) {
-          gameOver = true;
-          backButton.style.display = 'block'; // Буцах товчийг харуулах
-          bottomMenu.style.display = 'none'; // Цэсийг нуух
-          isPlaying = false;
-          updateTasks();
-          saveGameState();
-        }
-      }
-      obstacles = obstacles.filter(obs => obs.y < canvas.height);
-    }
-
     function drawScore() {
       // Оноог тоглоомын явц болон гол меню дээр зөв харуулах
       document.getElementById('score-display-top').textContent = Math.floor(highScore);
       if (isPlaying) {
         // Тоглоомын явцад оноог canvas дээр харуулах
         ctx.fillStyle = 'black';
-        ctx.font = '24px sans-serif';
+        ctx.font = '16px "Press Start 2P"'; // Pixel фонт
         ctx.drawImage(coinImg, 10, 10, 24, 24);
         ctx.fillText(`${Math.floor(score)} | High Score: ${Math.floor(highScore)}`, 40, 30);
         score += 1 / 60;
