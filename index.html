@@ -46,6 +46,8 @@
       align-items: center;
       cursor: pointer;
       max-width: 80px;
+      background: url('assets/bgmenu.png') no-repeat center center;
+      background-size: cover;
     }
     .menu-button img {
       width: 32px;
@@ -61,7 +63,8 @@
     }
     .menu-button.play {
       flex: 1.5;
-      background: #ffcc00;
+      background: url('assets/bgmenu.png') no-repeat center center;
+      background-size: cover;
       border-radius: 10px;
       max-width: 120px;
       order: 0; /* Голд байрлуулах */
@@ -154,7 +157,7 @@
     }
     #shop-button {
       position: absolute;
-      left: 10%;
+      left: 5%;
       top: 30%;
       width: 64px;
       height: 64px;
@@ -163,9 +166,9 @@
     }
     #shop-button-glow {
       position: absolute;
-      left: calc(10% - 10px);
+      left: calc(5% - 10px);
       top: calc(30% - 10px);
-      width: 84px; /* shop.png-ээс 10px том */
+      width: 84px;
       height: 84px;
       z-index: 1;
     }
@@ -178,9 +181,27 @@
       cursor: pointer;
       z-index: 2;
     }
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 24px;
+      font-family: 'Press Start 2P', cursive;
+      z-index: 4;
+    }
   </style>
 </head>
 <body>
+  <div id="loading-screen" class="loading-screen">
+    <div>Loading...</div>
+  </div>
   <canvas id="gameCanvas"></canvas>
   <button id="back-button">Back to Menu</button>
   <div class="score-display">
@@ -278,6 +299,8 @@
     settingsImg.src = 'assets/settings.png';
     const glowImg = new Image();
     glowImg.src = 'assets/glow.gif';
+    const bgMenuImg = new Image();
+    bgMenuImg.src = 'assets/bgmenu.png';
 
     // Background music
     const bgMusic = new Audio('assets/bg.mp3');
@@ -431,6 +454,9 @@
           gameOver = true;
           backButton.style.display = 'block'; // Буцах товчийг харуулах
           bottomMenu.style.display = 'none'; // Цэсийг нуух
+          shopButton.style.display = 'none';
+          settingsButton.style.display = 'none';
+          document.getElementById('shop-button-glow').style.display = 'none';
           isPlaying = false;
           updateTasks();
           saveGameState();
@@ -658,7 +684,8 @@
     let imagesLoaded = 0;
     function checkImagesLoaded() {
       imagesLoaded++;
-      if (imagesLoaded === 9) { // bg.png, balloon.gif, obstacle.png, coin.png, cloud.png, cloud1.png, cloud2.png, shop.png, settings.png
+      if (imagesLoaded === 10 && bgMusic.readyState >= 2) { // bg.png, balloon.gif, obstacle.png, coin.png, cloud.png, cloud1.png, cloud2.png, shop.png, settings.png, bgmenu.png
+        document.getElementById('loading-screen').style.display = 'none';
         balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
         obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8);
         updateTaskList();
@@ -679,6 +706,7 @@
     cloud2Img.onload = checkImagesLoaded;
     shopImg.onload = checkImagesLoaded;
     settingsImg.onload = checkImagesLoaded;
+    bgMenuImg.onload = checkImagesLoaded;
     bgImg.onerror = () => tg.showAlert('Failed to load background image');
     balloonImg.onerror = () => tg.showAlert('Failed to load balloon image');
     obstacleImg.onerror = () => tg.showAlert('Failed to load obstacle image');
@@ -688,7 +716,8 @@
     cloud2Img.onerror = () => tg.showAlert('Failed to load cloud2 image');
     shopImg.onerror = () => tg.showAlert('Failed to load shop image');
     settingsImg.onerror = () => tg.showAlert('Failed to load settings image');
-    glowImg.onerror = () => tg.showAlert('Failed to load glow image');
+    bgMenuImg.onerror = () => tg.showAlert('Failed to load menu background image');
+    bgMusic.onerror = () => tg.showAlert('Failed to load background music');
 
     tg.BackButton.onClick(() => {
       if (vibrationEnabled) tg.HapticFeedback.impactOccurred('medium');
