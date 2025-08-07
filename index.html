@@ -17,7 +17,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #aee1f9; /* Тоглоомын явцын дэвсгэр өнгө */
+      background: #aee1f9;
       font-family: 'Press Start 2P', cursive;
     }
     canvas {
@@ -67,14 +67,14 @@
       background-size: cover;
       border-radius: 10px;
       max-width: 120px;
-      order: 0; /* Голд байрлуулах */
+      order: 0;
     }
     .menu-button.play img {
-      width: 80px; /* 32px * 2.5 = 80px */
+      width: 80px;
       height: 80px;
     }
     .menu-button.wallet {
-      order: 1; /* Баруун захад байрлуулах */
+      order: 1;
     }
     #back-button {
       position: absolute;
@@ -135,8 +135,10 @@
       overflow-y: auto;
     }
     .menu-layer li {
-      padding: 5px;
+      padding: 10px;
       font-size: 14px;
+      color: white;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     }
     .score-display {
       position: fixed;
@@ -266,10 +268,10 @@
   </div>
 
   <script>
-    // Telegram Web App интеграцчлал
     const tg = window.Telegram.WebApp;
     tg.ready();
     const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 'guest';
+    const ODOO_API_URL = 'https://your-odoo-instance.com'; // Odoo-ийн хаягийг өөрийнхөөр солих
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -278,7 +280,6 @@
     const shopButton = document.getElementById('shop-button');
     const settingsButton = document.getElementById('settings-button');
 
-    // Зургуудыг ачаалах
     const bgImg = new Image();
     bgImg.src = 'assets/bg.png';
     const balloonImg = new Image();
@@ -302,7 +303,6 @@
     const bgMenuImg = new Image();
     bgMenuImg.src = 'assets/bgmenu.png';
 
-    // Background music
     const bgMusic = new Audio('assets/bg.mp3');
     bgMusic.loop = true;
 
@@ -313,7 +313,7 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    let balloon = { x: canvas.width / 2 - 64, y: canvas.height / 2, width: 128, height: 128 }; // 20% жижиг
+    let balloon = { x: canvas.width / 2 - 64, y: canvas.height / 2, width: 128, height: 128 };
     let obstacles = [];
     let speed = 2;
     let gameOver = false;
@@ -326,35 +326,30 @@
     let vibrationEnabled = localStorage.getItem(`vibrationEnabled_${userId}`) !== 'false';
     let musicEnabled = localStorage.getItem(`musicEnabled_${userId}`) !== 'false';
 
-    // Бөмбөлгийн хөдөлгөөний хувьсагчууд (зөвхөн гол меню дээр)
     let balloonY = canvas.height / 2;
-    const balloonAmplitude = 10; // Дээш доош хөдөлгөөний хэмжээ (маш жижиг)
-    const balloonFrequency = 0.002; // Хөдөлгөөний хурд
-
-    // Дэвсгэрийн хөдөлгөөний хувьсагчууд
+    const balloonAmplitude = 10;
+    const balloonFrequency = 0.002;
     let bgX = 0;
-    const bgSpeed = 25; // Зүүн тийш хөдлөх хурд (2x удаан)
+    const bgSpeed = 25;
 
-    // Үүлний хувьсагчууд
     let clouds = [];
     for (let i = 0; i < 9; i++) {
       clouds.push({
         img: i % 3 === 0 ? cloudImg : (i % 3 === 1 ? cloud1Img : cloud2Img),
         x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height / 2, // Зөвхөн дээд хагас
-        size: 75 + Math.random() * 150, // 75-225px хэмжээтэй (1.5x том)
-        speed: 10 + Math.random() * 20, // 10-30px/s хурд
-        zIndex: Math.random() < 0.5 ? 'front' : 'back' // Наагуур эсвэл цаагуур
+        y: Math.random() * canvas.height / 2,
+        size: 75 + Math.random() * 150,
+        speed: 10 + Math.random() * 20,
+        zIndex: Math.random() < 0.5 ? 'front' : 'back'
       });
     }
 
-    // Даалгаврын систем
     let tasks = [
       { id: 'score_1000', description: 'Score 1000 points', reward: 'Unlock Red Skin', completed: false },
       { id: 'play_3_times', description: 'Play 3 times', reward: 'Unlock Blue Skin', progress: playCount, target: 3, completed: false },
     ];
 
-    const menuBalloonSize = 384; // Меню дээрх бөмбөлөг 20% жижиг
+    const menuBalloonSize = 384;
     let balloonPixelData, obstaclePixelData;
     const offscreenCanvas = document.createElement('canvas');
     const offscreenCtx = offscreenCanvas.getContext('2d');
@@ -391,26 +386,23 @@
 
     function drawBackground(time, deltaTime) {
       if (!isPlaying) {
-        // Зүүн тийш хөдлөх дэвсгэр
         bgX -= bgSpeed * deltaTime;
         if (bgX <= -canvas.width) {
-          bgX += canvas.width; // Loop хийх
+          bgX += canvas.width;
         }
         ctx.drawImage(bgImg, bgX, 0, canvas.width, canvas.height);
-        ctx.drawImage(bgImg, bgX + canvas.width, 0, canvas.width, canvas.height); // Хоёр дахь хуулбар
+        ctx.drawImage(bgImg, bgX + canvas.width, 0, canvas.width, canvas.height);
       }
     }
 
     function drawClouds(deltaTime) {
       if (!isPlaying) {
         clouds.forEach(cloud => {
-          // Зүүн тийш хөдлөх
           cloud.x -= cloud.speed * deltaTime;
           if (cloud.x <= -cloud.size) {
-            cloud.x = canvas.width; // Баруун талаас дахин гарч ирнэ
-            cloud.y = Math.random() * canvas.height / 2; // Дээд хагасын шинэ байрлал
+            cloud.x = canvas.width;
+            cloud.y = Math.random() * canvas.height / 2;
           }
-          // Цаагуурх үүлнүүдийг эхлээд зурчихна
           if (cloud.zIndex === 'back') {
             ctx.drawImage(cloud.img, cloud.x, cloud.y, cloud.size, cloud.size);
           }
@@ -420,11 +412,9 @@
 
     function drawBalloon(time) {
       if (!isPlaying) {
-        // Гол меню дээр дээш доош хөдөлгөөнтэй бөмбөлөг
         balloonY = canvas.height / 2 + Math.sin(time * balloonFrequency) * balloonAmplitude;
         ctx.drawImage(balloonImg, canvas.width / 2 - menuBalloonSize / 2, balloonY - menuBalloonSize / 2, menuBalloonSize, menuBalloonSize);
       } else {
-        // Тоглоомын явцад хөдөлгөөнгүй, зөвхөн хэрэглэгчийн хяналтаар хэвтээ хөдөлнө
         ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
       }
     }
@@ -432,7 +422,6 @@
     function drawCloudsFront(deltaTime) {
       if (!isPlaying) {
         clouds.forEach(cloud => {
-          // Наагуурх үүлнүүдийг бөмбөлгийн дараа зурна
           if (cloud.zIndex === 'front') {
             ctx.drawImage(cloud.img, cloud.x, cloud.y, cloud.size, cloud.size);
           }
@@ -452,8 +441,8 @@
           )
         ) {
           gameOver = true;
-          backButton.style.display = 'block'; // Буцах товчийг харуулах
-          bottomMenu.style.display = 'none'; // Цэсийг нуух
+          backButton.style.display = 'block';
+          bottomMenu.style.display = 'none';
           shopButton.style.display = 'none';
           settingsButton.style.display = 'none';
           document.getElementById('shop-button-glow').style.display = 'none';
@@ -466,10 +455,8 @@
     }
 
     function drawScore() {
-      // Оноог тоглоомын явц болон гол меню дээр зөв харуулах
       document.getElementById('score-display-top').textContent = Math.floor(highScore);
       if (isPlaying) {
-        // Тоглоомын явцад оноог canvas дээр харуулах
         ctx.fillStyle = 'black';
         ctx.font = '16px "Press Start 2P"';
         ctx.drawImage(coinImg, 10, 10, 24, 24);
@@ -479,14 +466,54 @@
           highScore = score;
           localStorage.setItem(`highScore_${userId}`, highScore);
           document.getElementById('score-display-top').textContent = Math.floor(highScore);
+          saveUserToOdoo(); // Шинэ high score-г Odoo-д хадгалах
         }
       }
       updateWallet();
     }
 
+    async function saveUserToOdoo() {
+      try {
+        const response = await fetch(`${ODOO_API_URL}/api/telegram/save_user`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telegram_id: userId,
+            username: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.username || 'Unknown' : 'Unknown',
+            score: highScore,
+          }),
+        });
+        const result = await response.json();
+        if (result.status !== 'success') {
+          tg.showAlert('Failed to save user data to Odoo');
+        }
+      } catch (error) {
+        tg.showAlert('Error saving user data to Odoo: ' + error.message);
+      }
+    }
+
+    async function updateLeaderboard() {
+      try {
+        const response = await fetch(`${ODOO_API_URL}/api/telegram/leaderboard`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const leaderboardData = await response.json();
+        const leaderboard = document.getElementById('leaderboard');
+        leaderboard.innerHTML = '';
+        leaderboardData.forEach((data, index) => {
+          const li = document.createElement('li');
+          li.textContent = `${index + 1}. @${data.username}: ${Math.floor(data.score)} coins`;
+          leaderboard.appendChild(li);
+        });
+      } catch (error) {
+        tg.showAlert('Error fetching leaderboard: ' + error.message);
+      }
+    }
+
     function updateBalloon() {
       if (!isPlaying) {
-        balloon.x = canvas.width / 2 - menuBalloonSize / 2; // Меню дээр бөмбөлөг төвд
+        balloon.x = canvas.width / 2 - menuBalloonSize / 2;
       }
     }
 
@@ -495,16 +522,16 @@
       lastTime = time;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (isPlaying) {
-        ctx.fillStyle = '#aee1f9'; // Тоглоомын явцын дэвсгэр өнгө
+        ctx.fillStyle = '#aee1f9';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       } else {
-        drawBackground(time, deltaTime); // Хөдлөх дэвсгэр
-        drawClouds(deltaTime); // Цаагуурх үүлнүүд
+        drawBackground(time, deltaTime);
+        drawClouds(deltaTime);
       }
       updateBalloon();
       drawBalloon(time);
       if (!isPlaying) {
-        drawCloudsFront(deltaTime); // Наагуурх үүлнүүд
+        drawCloudsFront(deltaTime);
       }
       drawObstacles(deltaTime);
       drawScore();
@@ -512,7 +539,7 @@
     }
 
     function spawnObstacle() {
-      const size = 76.8; // 20% жижиг
+      const size = 76.8;
       const x = Math.random() * (canvas.width - size);
       obstacles.push({ x, y: -size, width: size, height: size });
     }
@@ -523,6 +550,7 @@
       localStorage.setItem(`tasks_${userId}`, JSON.stringify(tasks));
       localStorage.setItem(`vibrationEnabled_${userId}`, vibrationEnabled);
       localStorage.setItem(`musicEnabled_${userId}`, musicEnabled);
+      saveUserToOdoo();
       updateLeaderboard();
     }
 
@@ -567,21 +595,6 @@
       });
     }
 
-    function updateLeaderboard() {
-      const leaderboard = document.getElementById('leaderboard');
-      leaderboard.innerHTML = '';
-      let scores = JSON.parse(localStorage.getItem('leaderboard') || '{}');
-      scores[userId] = { score: highScore, username: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.username || 'Guest' : 'Guest' };
-      localStorage.setItem('leaderboard', JSON.stringify(scores));
-      
-      const sortedScores = Object.entries(scores).sort((a, b) => b[1].score - a[1].score).slice(0, 5);
-      sortedScores.forEach(([id, data], index) => {
-        const li = document.createElement('li');
-        li.textContent = `${index + 1}. ${data.username}: ${Math.floor(data.score)}`;
-        leaderboard.appendChild(li);
-      });
-    }
-
     function resetGame() {
       gameOver = false;
       isPlaying = true;
@@ -598,6 +611,7 @@
       clearInterval(spawnInterval);
       spawnInterval = setInterval(spawnObstacle, 1500);
       updateTasks();
+      saveGameState();
       gameLoop();
     }
 
@@ -684,7 +698,7 @@
     let imagesLoaded = 0;
     function checkImagesLoaded() {
       imagesLoaded++;
-      if (imagesLoaded === 10 && bgMusic.readyState >= 2) { // bg.png, balloon.gif, obstacle.png, coin.png, cloud.png, cloud1.png, cloud2.png, shop.png, settings.png, bgmenu.png
+      if (imagesLoaded === 10 && bgMusic.readyState >= 2) {
         document.getElementById('loading-screen').style.display = 'none';
         balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
         obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8);
