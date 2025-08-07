@@ -79,7 +79,7 @@
       left: 50%;
       transform: translateX(-50%);
       padding: 15px 30px;
-      font-size: 16px; /* Pixel фонтод тохируулж жижигрүүлсэн */
+      font-size: 16px;
       background: #ff4444;
       color: white;
       border: none;
@@ -100,7 +100,7 @@
       justify-content: center;
       align-items: center;
       color: white;
-      font-size: 16px; /* Pixel фонтод тохируулсан */
+      font-size: 16px;
       z-index: 3;
       transition: opacity 0.3s ease;
       font-family: 'Press Start 2P', cursive;
@@ -111,7 +111,7 @@
     }
     .menu-layer button {
       padding: 10px;
-      font-size: 14px; /* Pixel фонтод тохируулсан */
+      font-size: 14px;
       cursor: pointer;
       margin: 10px;
       background: #ffcc00;
@@ -133,7 +133,7 @@
     }
     .menu-layer li {
       padding: 5px;
-      font-size: 14px; /* Pixel фонтод тохируулсан */
+      font-size: 14px;
     }
     .score-display {
       position: fixed;
@@ -143,7 +143,7 @@
       align-items: center;
       z-index: 2;
       color: white;
-      font-size: 16px; /* Pixel фонтод тохируулсан */
+      font-size: 16px;
       font-family: 'Press Start 2P', cursive;
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     }
@@ -245,7 +245,7 @@
     let isPlaying = false;
     let playCount = localStorage.getItem(`playCount_${userId}`) ? parseInt(localStorage.getItem(`playCount_${userId}`)) : 0;
 
-    // Бөмбөлгийн хөдөлгөөний хувьсагчууд
+    // Бөмбөлгийн хөдөлгөөний хувьсагчууд (зөвхөн гол меню дээр)
     let balloonY = canvas.height / 2;
     const balloonAmplitude = 10; // Дээш доош хөдөлгөөний хэмжээ (маш жижиг)
     const balloonFrequency = 0.002; // Хөдөлгөөний хурд
@@ -261,7 +261,7 @@
         img: i % 3 === 0 ? cloudImg : (i % 3 === 1 ? cloud1Img : cloud2Img),
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height / 2, // Зөвхөн дээд хагас
-        size: 50 + Math.random() * 100, // 50-150px хэмжээтэй
+        size: 75 + Math.random() * 150, // 75-225px хэмжээтэй (1.5x том)
         speed: 10 + Math.random() * 20, // 10-30px/s хурд
         zIndex: Math.random() < 0.5 ? 'front' : 'back' // Наагуур эсвэл цаагуур
       });
@@ -339,10 +339,11 @@
 
     function drawBalloon(time) {
       if (!isPlaying) {
-        // Дээш доош хөдөлгөөнтэй бөмбөлөг
+        // Гол меню дээр дээш доош хөдөлгөөнтэй бөмбөлөг
         balloonY = canvas.height / 2 + Math.sin(time * balloonFrequency) * balloonAmplitude;
         ctx.drawImage(balloonImg, canvas.width / 2 - menuBalloonSize / 2, balloonY - menuBalloonSize / 2, menuBalloonSize, menuBalloonSize);
       } else {
+        // Тоглоомын явцад хөдөлгөөнгүй, зөвхөн хэрэглэгчийн хяналтаар хэвтээ хөдөлнө
         ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
       }
     }
@@ -358,13 +359,35 @@
       }
     }
 
+    function drawObstacles(deltaTime) {
+      if (!isPlaying) return;
+      for (let obs of obstacles) {
+        obs.y += speed * deltaTime * 60;
+        ctx.drawImage(obstacleImg, obs.x, obs.y, obs.width, obs.height);
+        if (
+          checkPixelCollision(
+            balloon.x, balloon.y, balloon.width, balloon.height, balloonPixelData,
+            obs.x, obs.y, obs.width, obs.height, obstaclePixelData
+          )
+        ) {
+          gameOver = true;
+          backButton.style.display = 'block'; // Буцах товчийг харуулах
+          bottomMenu.style.display = 'none'; // Цэсийг нуух
+          isPlaying = false;
+          updateTasks();
+          saveGameState();
+        }
+      }
+      obstacles = obstacles.filter(obs => obs.y < canvas.height);
+    }
+
     function drawScore() {
       // Оноог тоглоомын явц болон гол меню дээр зөв харуулах
       document.getElementById('score-display-top').textContent = Math.floor(highScore);
       if (isPlaying) {
         // Тоглоомын явцад оноог canvas дээр харуулах
         ctx.fillStyle = 'black';
-        ctx.font = '16px "Press Start 2P"'; // Pixel фонт
+        ctx.font = '16px "Press Start 2P"';
         ctx.drawImage(coinImg, 10, 10, 24, 24);
         ctx.fillText(`${Math.floor(score)} | High Score: ${Math.floor(highScore)}`, 40, 30);
         score += 1 / 60;
