@@ -38,7 +38,7 @@ canvas {
   cursor: pointer;
   max-width: 80px;
   background: url('assets/bgmenu.png') no-repeat center center;
-  background-size: 200%; /* Leaderboard-ийн загварт тохируулсан */
+  background-size: 200%;
 }
 .menu-button img {
   width: 32px;
@@ -46,7 +46,7 @@ canvas {
 }
 .menu-button.skins, .menu-button.wallet {
   flex: 1;
-  max-width: 80px; /* Leaderboard-ийн загварт тохируулсан */
+  max-width: 80px;
   background-size: 200%;
 }
 .menu-button.skins img, .menu-button.wallet img {
@@ -56,7 +56,7 @@ canvas {
 .menu-button.play {
   flex: 1.5;
   background: url('assets/bgmenu.png') no-repeat center center;
-  background-size: 300%; /* Голын товч том хэвээрээ */
+  background-size: 300%;
   border-radius: 10px;
   max-width: 120px;
   order: 0;
