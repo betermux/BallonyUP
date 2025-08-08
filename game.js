@@ -1,7 +1,10 @@
 const tg = window.Telegram.WebApp;
 tg.ready();
 const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 'guest';
-const ODOO_API_URL = 'https://your-odoo-instance.com'; // Odoo-ийн хаягийг өөрийнхөөр солих
+
+// Firebase database
+const database = window.firebaseDatabase;
+import { ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -46,7 +49,7 @@ let obstacles = [];
 let speed = 2;
 let gameOver = false;
 let score = 0;
-let highScore = localStorage.getItem(`highScore_${userId}`) ? parseInt(localStorage.getItem(`highScore_${userId}`)) : 0;
+let highScore = 0; // Анхны утга, Firebase-ээс авна
 let lastTime = 0;
 let spawnInterval;
 let isPlaying = false;
@@ -82,10 +85,65 @@ let balloonPixelData, obstaclePixelData;
 const offscreenCanvas = document.createElement('canvas');
 const offscreenCtx = offscreenCanvas.getContext('2d');
 
+// Firebase-ээс highScore-г авах
+function loadHighScoreFromFirebase() {
+  const userRef = ref(database, 'leaderboard/' + userId);
+  onValue(userRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data && data.score) {
+      highScore = data.score;
+      document.getElementById('score-display-top').textContent = Math.floor(highScore);
+      updateWallet();
+    }
+  }, (error) => {
+    tg.showAlert('Error loading high score from Firebase: ' + error.message);
+  });
+}
+
+// Хэрэглэгчийн оноог Firebase-д хадгалах
+function saveScoreToFirebase() {
+  const username = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.username || 'Unknown' : 'Unknown';
+  set(ref(database, 'leaderboard/' + userId), {
+    username: username,
+    score: Math.floor(highScore),
+    timestamp: Date.now()
+  }).catch(error => {
+    tg.showAlert('Error saving score to Firebase: ' + error.message);
+  });
+}
+
+// Leaderboard-ийг Firebase-ээс харуулах
+function updateLeaderboard() {
+  const leaderboardRef = ref(database, 'leaderboard/');
+  onValue(leaderboardRef, (snapshot) => {
+    const data = snapshot.val();
+    const leaderboard = document.getElementById('leaderboard');
+    leaderboard.innerHTML = '';
+
+    if (!data) {
+      const li = document.createElement('li');
+      li.textContent = 'No leaderboard data available';
+      leaderboard.appendChild(li);
+    } else {
+      const sortedScores = Object.entries(data)
+        .sort((a, b) => b[1].score - a[1].score)
+        .slice(0, 10); // Шилдэг 10-г харуулах
+
+      sortedScores.forEach(([userId, userData], index) => {
+        const li = document.createElement('li');
+        li.textContent = `${index + 1}. @${userData.username}: ${userData.score} coins`;
+        leaderboard.appendChild(li);
+      });
+    }
+  }, (error) => {
+    tg.showAlert('Error fetching leaderboard: ' + error.message);
+  });
+}
+
 function getPixelData(img, width, height) {
   offscreenCanvas.width = width;
   offscreenCanvas.height = height;
-  offscreenCtx.clearRect(0, 0, width, height);
+  offscreenCtx.clear stawRect(0, 0, width, height);
   offscreenCtx.drawImage(img, 0, 0, width, height);
   return offscreenCtx.getImageData(0, 0, width, height).data;
 }
@@ -192,57 +250,11 @@ function drawScore() {
     score += 1 / 60;
     if (score > highScore) {
       highScore = score;
-      localStorage.setItem(`highScore_${userId}`, highScore);
       document.getElementById('score-display-top').textContent = Math.floor(highScore);
-      saveUserToOdoo();
+      saveScoreToFirebase(); // Firebase-д хадгалах
     }
   }
   updateWallet();
-}
-
-async function saveUserToOdoo() {
-  try {
-    const response = await fetch(`${ODOO_API_URL}/api/telegram/save_user`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        telegram_id: userId,
-        username: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.username || 'Unknown' : 'Unknown',
-        score: highScore,
-      }),
-    });
-    const result = await response.json();
-    if (result.status !== 'success') {
-      tg.showAlert('Failed to save user data to Odoo');
-    }
-  } catch (error) {
-    tg.showAlert('Error saving user data to Odoo: ' + error.message);
-  }
-}
-
-async function updateLeaderboard() {
-  try {
-    const response = await fetch(`${ODOO_API_URL}/api/telegram/leaderboard`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    const leaderboardData = await response.json();
-    const leaderboard = document.getElementById('leaderboard');
-    leaderboard.innerHTML = '';
-    if (!leaderboardData || leaderboardData.length === 0) {
-      const li = document.createElement('li');
-      li.textContent = 'No leaderboard data available';
-      leaderboard.appendChild(li);
-    } else {
-      leaderboardData.forEach((data, index) => {
-        const li = document.createElement('li');
-        li.textContent = `${index + 1}. @${data.username}: ${Math.floor(data.score)} coins`;
-        leaderboard.appendChild(li);
-      });
-    }
-  } catch (error) {
-    tg.showAlert('Error fetching leaderboard: ' + error.message);
-  }
 }
 
 function updateBalloon() {
@@ -279,12 +291,11 @@ function spawnObstacle() {
 }
 
 function saveGameState() {
-  localStorage.setItem(`highScore_${userId}`, highScore);
   localStorage.setItem(`playCount_${userId}`, playCount);
   localStorage.setItem(`tasks_${userId}`, JSON.stringify(tasks));
   localStorage.setItem(`vibrationEnabled_${userId}`, vibrationEnabled);
   localStorage.setItem(`musicEnabled_${userId}`, musicEnabled);
-  saveUserToOdoo();
+  saveScoreToFirebase(); // Firebase-д хадгалах
   updateLeaderboard();
 }
 
@@ -437,6 +448,7 @@ function checkImagesLoaded() {
     balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
     obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8);
     updateTaskList();
+    loadHighScoreFromFirebase(); // Firebase-ээс highScore-г авах
     updateLeaderboard();
     updateWallet();
     document.getElementById('vibration-toggle').checked = vibrationEnabled;
