@@ -2,7 +2,6 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 'guest';
 
-// Firebase database
 const database = window.firebaseDatabase;
 import { ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
@@ -49,7 +48,7 @@ let obstacles = [];
 let speed = 2;
 let gameOver = false;
 let score = 0;
-let highScore = 0; // Анхны утга, Firebase-ээс авна
+let highScore = 0;
 let lastTime = 0;
 let spawnInterval;
 let isPlaying = false;
@@ -127,8 +126,7 @@ function updateLeaderboard() {
     } else {
       const sortedScores = Object.entries(data)
         .sort((a, b) => b[1].score - a[1].score)
-        .slice(0, 10); // Шилдэг 10-г харуулах
-
+        .slice(0, 10);
       sortedScores.forEach(([userId, userData], index) => {
         const li = document.createElement('li');
         li.textContent = `${index + 1}. @${userData.username}: ${userData.score} coins`;
@@ -143,7 +141,7 @@ function updateLeaderboard() {
 function getPixelData(img, width, height) {
   offscreenCanvas.width = width;
   offscreenCanvas.height = height;
-  offscreenCtx.clear stawRect(0, 0, width, height);
+  offscreenCtx.clearRect(0, 0, width, height);
   offscreenCtx.drawImage(img, 0, 0, width, height);
   return offscreenCtx.getImageData(0, 0, width, height).data;
 }
@@ -251,7 +249,7 @@ function drawScore() {
     if (score > highScore) {
       highScore = score;
       document.getElementById('score-display-top').textContent = Math.floor(highScore);
-      saveScoreToFirebase(); // Firebase-д хадгалах
+      saveScoreToFirebase();
     }
   }
   updateWallet();
@@ -295,7 +293,7 @@ function saveGameState() {
   localStorage.setItem(`tasks_${userId}`, JSON.stringify(tasks));
   localStorage.setItem(`vibrationEnabled_${userId}`, vibrationEnabled);
   localStorage.setItem(`musicEnabled_${userId}`, musicEnabled);
-  saveScoreToFirebase(); // Firebase-д хадгалах
+  saveScoreToFirebase();
   updateLeaderboard();
 }
 
@@ -440,44 +438,30 @@ document.getElementById('music-toggle').addEventListener('change', (e) => {
   }
 });
 
-let imagesLoaded = 0;
-function checkImagesLoaded() {
-  imagesLoaded++;
-  if (imagesLoaded === 10 && bgMusic.readyState >= 2) {
-    document.getElementById('loading-screen').style.display = 'none';
-    balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
-    obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8);
-    updateTaskList();
-    loadHighScoreFromFirebase(); // Firebase-ээс highScore-г авах
-    updateLeaderboard();
-    updateWallet();
-    document.getElementById('vibration-toggle').checked = vibrationEnabled;
-    document.getElementById('music-toggle').checked = musicEnabled;
-    if (musicEnabled) bgMusic.play();
-    gameLoop();
-  }
-}
-bgImg.onload = checkImagesLoaded;
-balloonImg.onload = checkImagesLoaded;
-obstacleImg.onload = checkImagesLoaded;
-coinImg.onload = checkImagesLoaded;
-cloudImg.onload = checkImagesLoaded;
-cloud1Img.onload = checkImagesLoaded;
-cloud2Img.onload = checkImagesLoaded;
-shopImg.onload = checkImagesLoaded;
-settingsImg.onload = checkImagesLoaded;
-bgMenuImg.onload = checkImagesLoaded;
-bgImg.onerror = () => tg.showAlert('Failed to load background image');
-balloonImg.onerror = () => tg.showAlert('Failed to load balloon image');
-obstacleImg.onerror = () => tg.showAlert('Failed to load obstacle image');
-coinImg.onerror = () => tg.showAlert('Failed to load coin image');
-cloudImg.onerror = () => tg.showAlert('Failed to load cloud image');
-cloud1Img.onerror = () => tg.showAlert('Failed to load cloud1 image');
-cloud2Img.onerror = () => tg.showAlert('Failed to load cloud2 image');
-shopImg.onerror = () => tg.showAlert('Failed to load shop image');
-settingsImg.onerror = () => tg.showAlert('Failed to load settings image');
-bgMenuImg.onerror = () => tg.showAlert('Failed to load menu background image');
-bgMusic.onerror = () => tg.showAlert('Failed to load background music');
+// Зургуудыг ачаалж, тоглоомыг эхлүүлэх
+Promise.all([
+  new Promise(resolve => { bgImg.onload = resolve; bgImg.onerror = () => tg.showAlert('Failed to load background image'); }),
+  new Promise(resolve => { balloonImg.onload = resolve; balloonImg.onerror = () => tg.showAlert('Failed to load balloon image'); }),
+  new Promise(resolve => { obstacleImg.onload = resolve; obstacleImg.onerror = () => tg.showAlert('Failed to load obstacle image'); }),
+  new Promise(resolve => { coinImg.onload = resolve; coinImg.onerror = () => tg.showAlert('Failed to load coin image'); }),
+  new Promise(resolve => { cloudImg.onload = resolve; cloudImg.onerror = () => tg.showAlert('Failed to load cloud image'); }),
+  new Promise(resolve => { cloud1Img.onload = resolve; cloud1Img.onerror = () => tg.showAlert('Failed to load cloud1 image'); }),
+  new Promise(resolve => { cloud2Img.onload = resolve; cloud2Img.onerror = () => tg.showAlert('Failed to load cloud2 image'); }),
+  new Promise(resolve => { shopImg.onload = resolve; shopImg.onerror = () => tg.showAlert('Failed to load shop image'); }),
+  new Promise(resolve => { settingsImg.onload = resolve; settingsImg.onerror = () => tg.showAlert('Failed to load settings image'); }),
+  new Promise(resolve => { bgMenuImg.onload = resolve; bgMenuImg.onerror = () => tg.showAlert('Failed to load menu background image'); }),
+]).then(() => {
+  balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
+  obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8);
+  updateTaskList();
+  loadHighScoreFromFirebase();
+  updateLeaderboard();
+  updateWallet();
+  document.getElementById('vibration-toggle').checked = vibrationEnabled;
+  document.getElementById('music-toggle').checked = musicEnabled;
+  if (musicEnabled) bgMusic.play();
+  gameLoop();
+});
 
 tg.BackButton.onClick(() => {
   if (vibrationEnabled) tg.HapticFeedback.impactOccurred('medium');
