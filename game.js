@@ -84,7 +84,6 @@ let balloonPixelData, obstaclePixelData;
 const offscreenCanvas = document.createElement('canvas');
 const offscreenCtx = offscreenCanvas.getContext('2d');
 
-// Firebase-ээс highScore-г авах
 function loadHighScoreFromFirebase() {
   const userRef = ref(database, 'leaderboard/' + userId);
   onValue(userRef, (snapshot) => {
@@ -99,7 +98,6 @@ function loadHighScoreFromFirebase() {
   });
 }
 
-// Хэрэглэгчийн оноог Firebase-д хадгалах
 function saveScoreToFirebase() {
   const username = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.username || 'Unknown' : 'Unknown';
   set(ref(database, 'leaderboard/' + userId), {
@@ -111,7 +109,6 @@ function saveScoreToFirebase() {
   });
 }
 
-// Leaderboard-ийг Firebase-ээс харуулах
 function updateLeaderboard() {
   const leaderboardRef = ref(database, 'leaderboard/');
   onValue(leaderboardRef, (snapshot) => {
@@ -410,7 +407,7 @@ settingsButton.addEventListener('click', () => {
 document.querySelectorAll('.menu-layer .back-button').forEach(button => {
   button.addEventListener('click', () => {
     if (vibrationEnabled) tg.HapticFeedback.impactOccurred('medium');
-    button.parentNode.parentNode.style.display = 'none';
+    button.parentNode.style.display = 'none';
   });
 });
 
@@ -439,7 +436,6 @@ document.getElementById('music-toggle').addEventListener('change', (e) => {
   }
 });
 
-// Зургуудыг ачаалж, тоглоомыг эхлүүлэх
 Promise.all([
   new Promise(resolve => { bgImg.onload = resolve; bgImg.onerror = () => tg.showAlert('Failed to load background image'); }),
   new Promise(resolve => { balloonImg.onload = resolve; balloonImg.onerror = () => tg.showAlert('Failed to load balloon image'); }),
