@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="loading-screen" class="loading-screen">
+    <div>Loading...</div>
+  </div>
   <canvas id="gameCanvas"></canvas>
   <button id="back-button">Back to Menu</button>
   <div class="score-display">
@@ -71,24 +74,6 @@
       <button class="back-button">Back</button>
     </div>
   </div>
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getDatabase } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyCeD_9k4rfspxHa_T8KAZRhkPT_deFP-OA",
-      authDomain: "ballonyup.firebaseapp.com",
-      databaseURL: "https://ballonyup-default-rtdb.firebaseio.com",
-      projectId: "ballonyup",
-      storageBucket: "ballonyup.firebasestorage.app",
-      messagingSenderId: "641854409703",
-      appId: "1:641854409703:web:69933dac88bc7184874b42",
-      measurementId: "G-94EH113TS5"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    window.firebaseDatabase = getDatabase(app);
-  </script>
   <script src="game.js"></script>
 </body>
 </html>
