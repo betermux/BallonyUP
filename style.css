@@ -38,24 +38,25 @@ canvas {
   cursor: pointer;
   max-width: 80px;
   background: url('assets/bgmenu.png') no-repeat center center;
-  background-size: 300%; /* bgmenu.png-ийг 3x том болгосон */
+  background-size: 200%; /* Leaderboard-ийн загварт тохируулсан */
 }
 .menu-button img {
   width: 32px;
   height: 32px;
 }
 .menu-button.skins, .menu-button.wallet {
-  flex: 1.5;
-  max-width: 120px;
+  flex: 1;
+  max-width: 80px; /* Leaderboard-ийн загварт тохируулсан */
+  background-size: 200%;
 }
 .menu-button.skins img, .menu-button.wallet img {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
 }
 .menu-button.play {
   flex: 1.5;
   background: url('assets/bgmenu.png') no-repeat center center;
-  background-size: 300%; /* bgmenu.png-ийг 3x том болгосон */
+  background-size: 300%; /* Голын товч том хэвээрээ */
   border-radius: 10px;
   max-width: 120px;
   order: 0;
