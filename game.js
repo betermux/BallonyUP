@@ -1,7 +1,7 @@
 const tg = window.Telegram.WebApp;
 tg.ready();
 const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 'guest';
-const ODOO_API_URL = 'https://your-odoo-instance.com'; // Odoo-ийн хаягийг өөрийнхөөр солих
+const ODOO_API_URL = 'https://ballonyup3.odoo.com/'; // Odoo-ийн хаягийг өөрийнхөөр солих
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
