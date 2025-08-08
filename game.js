@@ -1,9 +1,9 @@
+import { ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
 const tg = window.Telegram.WebApp;
 tg.ready();
 const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 'guest';
-
 const database = window.firebaseDatabase;
-import { ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -43,7 +43,7 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-let balloon = { x: canvas.width / 2 - 64, y: canvas.height / 2, width: 128, height: 128 };
+let balloon = { x: canvas.width / 2 - 64, y: canvas.height - 150, width: 128, height: 128 };
 let obstacles = [];
 let speed = 2;
 let gameOver = false;
@@ -52,22 +52,16 @@ let highScore = 0;
 let lastTime = 0;
 let spawnInterval;
 let isPlaying = false;
-let playCount = localStorage.getItem(`playCount_${userId}`) ? parseInt(localStorage.getItem(`playCount_${userId}`)) : 0;
-let vibrationEnabled = localStorage.getItem(`vibrationEnabled_${userId}`) !== 'false';
-let musicEnabled = localStorage.getItem(`musicEnabled_${userId}`) !== 'false';
-
-let balloonY = canvas.height / 2;
-const balloonAmplitude = 10;
-const balloonFrequency = 0.002;
-let bgX = 0;
-const bgSpeed = 25;
+let playCount = 0;
+let vibrationEnabled = true;
+let musicEnabled = true;
 
 let clouds = [];
 for (let i = 0; i < 9; i++) {
   clouds.push({
     img: i % 3 === 0 ? cloudImg : (i % 3 === 1 ? cloud1Img : cloud2Img),
     x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height / 2,
+    y: Math.random() * (canvas.height / 2),
     size: 75 + Math.random() * 150,
     speed: 10 + Math.random() * 20,
     zIndex: Math.random() < 0.5 ? 'front' : 'back'
@@ -115,7 +109,6 @@ function updateLeaderboard() {
     const data = snapshot.val();
     const leaderboard = document.getElementById('leaderboard');
     leaderboard.innerHTML = '';
-
     if (!data) {
       const li = document.createElement('li');
       li.textContent = 'No leaderboard data available';
@@ -167,12 +160,7 @@ function checkPixelCollision(x1, y1, w1, h1, pixelData1, x2, y2, w2, h2, pixelDa
 
 function drawBackground(time, deltaTime) {
   if (!isPlaying) {
-    bgX -= bgSpeed * deltaTime;
-    if (bgX <= -canvas.width) {
-      bgX += canvas.width;
-    }
-    ctx.drawImage(bgImg, bgX, 0, canvas.width, canvas.height);
-    ctx.drawImage(bgImg, bgX + canvas.width, 0, canvas.width, canvas.height);
+    ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
   }
 }
 
@@ -182,7 +170,7 @@ function drawClouds(deltaTime) {
       cloud.x -= cloud.speed * deltaTime;
       if (cloud.x <= -cloud.size) {
         cloud.x = canvas.width;
-        cloud.y = Math.random() * canvas.height / 2;
+        cloud.y = Math.random() * (canvas.height / 2);
       }
       if (cloud.zIndex === 'back') {
         ctx.drawImage(cloud.img, cloud.x, cloud.y, cloud.size, cloud.size);
@@ -193,7 +181,7 @@ function drawClouds(deltaTime) {
 
 function drawBalloon(time) {
   if (!isPlaying) {
-    balloonY = canvas.height / 2 + Math.sin(time * balloonFrequency) * balloonAmplitude;
+    const balloonY = canvas.height / 2 + Math.sin(time * 0.002) * 10;
     ctx.drawImage(balloonImg, canvas.width / 2 - menuBalloonSize / 2, balloonY - menuBalloonSize / 2, menuBalloonSize, menuBalloonSize);
   } else {
     ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
@@ -229,7 +217,7 @@ function drawObstacles(deltaTime) {
       document.getElementById('shop-button-glow').style.display = 'none';
       isPlaying = false;
       updateTasks();
-      saveGameState();
+      saveScoreToFirebase();
     }
   }
   obstacles = obstacles.filter(obs => obs.y < canvas.height);
@@ -255,6 +243,9 @@ function drawScore() {
 function updateBalloon() {
   if (!isPlaying) {
     balloon.x = canvas.width / 2 - menuBalloonSize / 2;
+    balloon.y = canvas.height / 2;
+  } else {
+    balloon.y = canvas.height - 150; // Бөмбөлөг доод хэсэгт
   }
 }
 
@@ -268,14 +259,13 @@ function gameLoop(time) {
   } else {
     drawBackground(time, deltaTime);
     drawClouds(deltaTime);
-    drawBalloon(time);
+  }
+  updateBalloon();
+  drawBalloon(time);
+  if (!isPlaying) {
     drawCloudsFront(deltaTime);
   }
-  if (isPlaying) {
-    updateBalloon();
-    drawBalloon(time);
-    drawObstacles(deltaTime);
-  }
+  drawObstacles(deltaTime);
   drawScore();
   requestAnimationFrame(gameLoop);
 }
@@ -287,10 +277,6 @@ function spawnObstacle() {
 }
 
 function saveGameState() {
-  localStorage.setItem(`playCount_${userId}`, playCount);
-  localStorage.setItem(`tasks_${userId}`, JSON.stringify(tasks));
-  localStorage.setItem(`vibrationEnabled_${userId}`, vibrationEnabled);
-  localStorage.setItem(`musicEnabled_${userId}`, musicEnabled);
   saveScoreToFirebase();
   updateLeaderboard();
 }
@@ -321,7 +307,6 @@ function updateTasks() {
       }
     }
   });
-  localStorage.setItem(`playCount_${userId}`, playCount);
   updateTaskList();
   saveGameState();
 }
@@ -340,7 +325,7 @@ function resetGame() {
   gameOver = false;
   isPlaying = true;
   balloon.x = canvas.width / 2 - balloon.width / 2;
-  balloon.y = canvas.height / 2 - balloon.height / 2;
+  balloon.y = canvas.height - 150; // Бөмбөлөг доод хэсэгт
   obstacles = [];
   score = 0;
   backButton.style.display = 'none';
@@ -353,7 +338,6 @@ function resetGame() {
   spawnInterval = setInterval(spawnObstacle, 1500);
   updateTasks();
   saveGameState();
-  gameLoop();
 }
 
 canvas.addEventListener('touchmove', function(e) {
@@ -423,12 +407,10 @@ backButton.addEventListener('click', () => {
 
 document.getElementById('vibration-toggle').addEventListener('change', (e) => {
   vibrationEnabled = e.target.checked;
-  localStorage.setItem(`vibrationEnabled_${userId}`, vibrationEnabled);
 });
 
 document.getElementById('music-toggle').addEventListener('change', (e) => {
   musicEnabled = e.target.checked;
-  localStorage.setItem(`musicEnabled_${userId}`, musicEnabled);
   if (musicEnabled) {
     bgMusic.play();
   } else {
