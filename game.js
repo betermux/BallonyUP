@@ -271,13 +271,14 @@ function gameLoop(time) {
   } else {
     drawBackground(time, deltaTime);
     drawClouds(deltaTime);
-  }
-  updateBalloon();
-  drawBalloon(time);
-  if (!isPlaying) {
+    drawBalloon(time);
     drawCloudsFront(deltaTime);
   }
-  drawObstacles(deltaTime);
+  if (isPlaying) {
+    updateBalloon();
+    drawBalloon(time);
+    drawObstacles(deltaTime);
+  }
   drawScore();
   requestAnimationFrame(gameLoop);
 }
@@ -461,6 +462,8 @@ Promise.all([
   document.getElementById('music-toggle').checked = musicEnabled;
   if (musicEnabled) bgMusic.play();
   gameLoop();
+}).catch(error => {
+  tg.showAlert('Error loading assets: ' + error.message);
 });
 
 tg.BackButton.onClick(() => {
