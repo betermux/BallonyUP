@@ -9,9 +9,6 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="loading-screen" class="loading-screen">
-    <div>Loading...</div>
-  </div>
   <canvas id="gameCanvas"></canvas>
   <button id="back-button">Back to Menu</button>
   <div class="score-display">
@@ -74,7 +71,7 @@
       <button class="back-button">Back</button>
     </div>
   </div>
-  <!-- Firebase SDK-г нэмэх -->
+  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getDatabase } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
@@ -91,7 +88,7 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    window.firebaseDatabase = getDatabase(app); // game.js-д ашиглахын тулд
+    window.firebaseDatabase = getDatabase(app);
   </script>
   <script src="game.js"></script>
 </body>
