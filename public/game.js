@@ -32,7 +32,7 @@ const bgMenuImg = new Image();
 bgMenuImg.src = 'assets/bgmenu.png';
 
 const bgMusic = new Audio('assets/bg.mp3');
-bg.mp3.loop = true;
+bgMusic.loop = true;
 
 function resizeCanvas() {
   canvas.width = window.innerWidth;
@@ -52,7 +52,7 @@ let spawnInterval;
 let isPlaying = false;
 let playCount = localStorage.getItem(`playCount_${userId}`) ? parseInt(localStorage.getItem(`playCount_${userId}`)) : 0;
 let vibrationEnabled = localStorage.getItem(`vibrationEnabled_${userId}`) !== 'false';
-let musicEnabled = localStorage.getItem(`musicEnabled_${userId}`) !== 'false';
+let musicEnabled = localStorage.getItem(`musicEnabled_${userId}`) !== 'true';
 
 let balloonY = canvas.height / 2;
 const balloonAmplitude = 10;
