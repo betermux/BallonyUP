@@ -80,7 +80,7 @@ for (let i = 0; i < 9; i++) {
 let tasks = [
   { id: 'score_1000', description: 'Score 1000 points', reward: 'Unlock Red Skin', completed: false },
   { id: 'play_3_times', description: 'Play 3 times', reward: 'Unlock Blue Skin', progress: playCount, target: 3, completed: false },
-  { id: 'no_music_challenge', description: 'Complete game without music', reward: 'Unlock Silent Skin', completed: false }
+  { id: 'no_music_challenge', description: 'Complete game without music', reward: 'Unlock Silent Skin', completed: true } // Auto-completed since no music
 ];
 
 const menuBalloonSize = 384;
@@ -279,8 +279,7 @@ function resetGame() {
   spawnInterval = setInterval(spawnObstacle, 1500);
   updateTasks();
   saveGameState();
-  tg.showAlert('Welcome to No Background Music Challenge! Play without music for a unique experience.');
-  gameLoop();
+  gameLoop(); // Alert-ийг хасч, дуу тоглоох боломжгүй болгосон
 }
 
 function spawnObstacle() {
