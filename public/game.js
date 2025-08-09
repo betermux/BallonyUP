@@ -1,7 +1,6 @@
 const tg = window.Telegram.WebApp;
 tg.ready();
-const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 'guest';
-const ODOO_API_URL = 'https://ballonyup3.odoo.com/'; // Odoo-ийн хаягийг өөрийнхөөр солих
+const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id.toString() : 'guest';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -177,6 +176,8 @@ function drawObstacles(deltaTime) {
       isPlaying = false;
       updateTasks();
       saveGameState();
+      window.saveScore(highScore); // Firebase-д оноо хадгалах
+      if (score >= 1000) window.addTokens(10); // Жишээ: 1000 оноонд 10 токен
     }
   }
   obstacles = obstacles.filter(obs => obs.y < canvas.height);
@@ -194,115 +195,23 @@ function drawScore() {
       highScore = score;
       localStorage.setItem(`highScore_${userId}`, highScore);
       document.getElementById('score-display-top').textContent = Math.floor(highScore);
-      saveUserToOdoo();
+      window.saveScore(highScore); // Firebase-д оноо хадгалах
     }
   }
   updateWallet();
 }
 
-async function saveUserToOdoo() {
-  try {
-    const response = await fetch(`${ODOO_API_URL}/api/telegram/save_user`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        telegram_id: userId,
-        username: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.username || 'Unknown' : 'Unknown',
-        score: highScore,
-      }),
-    });
-    const result = await response.json();
-    if (result.status !== 'success') {
-      tg.showAlert('Failed to save user data to Odoo');
-    }
-  } catch (error) {
-    tg.showAlert('Error saving user data to Odoo: ' + error.message);
-  }
-}
-
-async function updateLeaderboard() {
-  try {
-    const response = await fetch(`${ODOO_API_URL}/api/telegram/leaderboard`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    const leaderboardData = await response.json();
-    const leaderboard = document.getElementById('leaderboard');
-    leaderboard.innerHTML = '';
-    if (!leaderboardData || leaderboardData.length === 0) {
-      const li = document.createElement('li');
-      li.textContent = 'No leaderboard data available';
-      leaderboard.appendChild(li);
-    } else {
-      leaderboardData.forEach((data, index) => {
-        const li = document.createElement('li');
-        li.textContent = `${index + 1}. @${data.username}: ${Math.floor(data.score)} coins`;
-        leaderboard.appendChild(li);
-      });
-    }
-  } catch (error) {
-    tg.showAlert('Error fetching leaderboard: ' + error.message);
-  }
-}
-
-function updateBalloon() {
-  if (!isPlaying) {
-    balloon.x = canvas.width / 2 - menuBalloonSize / 2;
-  }
-}
-
-function gameLoop(time) {
-  const deltaTime = lastTime ? (time - lastTime) / 1000 : 1/60;
-  lastTime = time;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (isPlaying) {
-    ctx.fillStyle = '#aee1f9';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  } else {
-    drawBackground(time, deltaTime);
-    drawClouds(deltaTime);
-  }
-  updateBalloon();
-  drawBalloon(time);
-  if (!isPlaying) {
-    drawCloudsFront(deltaTime);
-  }
-  drawObstacles(deltaTime);
-  drawScore();
-  requestAnimationFrame(gameLoop);
-}
-
-function spawnObstacle() {
-  const size = 76.8;
-  const x = Math.random() * (canvas.width - size);
-  obstacles.push({ x, y: -size, width: size, height: size });
-}
-
-function saveGameState() {
-  localStorage.setItem(`highScore_${userId}`, highScore);
-  localStorage.setItem(`playCount_${userId}`, playCount);
-  localStorage.setItem(`tasks_${userId}`, JSON.stringify(tasks));
-  localStorage.setItem(`vibrationEnabled_${userId}`, vibrationEnabled);
-  localStorage.setItem(`musicEnabled_${userId}`, musicEnabled);
-  saveUserToOdoo();
-  updateLeaderboard();
-}
-
-function changeSkin(skinId) {
-  balloonImg.src = `assets/${skinId}.gif`;
-  tg.showAlert(`Skin changed to: ${skinId}`);
-  saveGameState();
-}
-
 function updateWallet() {
   document.getElementById('score-display').textContent = Math.floor(score);
   document.getElementById('high-score-display').textContent = Math.floor(highScore);
+  window.getUserData(); // Firebase-ээс токеныг шинэчлэх
 }
 
 function updateTasks() {
   tasks.forEach(task => {
     if (task.id === 'score_1000' && score >= 1000 && !task.completed) {
       task.completed = true;
+      window.addTokens(10); // Токен нэмэх
       tg.showAlert(`Task completed: ${task.description}! Reward: ${task.reward}`);
     }
     if (task.id === 'play_3_times' && !task.completed) {
@@ -310,6 +219,7 @@ function updateTasks() {
       task.progress = playCount;
       if (task.progress >= task.target) {
         task.completed = true;
+        window.addTokens(5); // Токен нэмэх
         tg.showAlert(`Task completed: ${task.description}! Reward: ${task.reward}`);
       }
     }
@@ -349,6 +259,55 @@ function resetGame() {
   gameLoop();
 }
 
+function spawnObstacle() {
+  const size = 76.8;
+  const x = Math.random() * (canvas.width - size);
+  obstacles.push({ x, y: -size, width: size, height: size });
+}
+
+function saveGameState() {
+  localStorage.setItem(`highScore_${userId}`, highScore);
+  localStorage.setItem(`playCount_${userId}`, playCount);
+  localStorage.setItem(`tasks_${userId}`, JSON.stringify(tasks));
+  localStorage.setItem(`vibrationEnabled_${userId}`, vibrationEnabled);
+  localStorage.setItem(`musicEnabled_${userId}`, musicEnabled);
+  window.saveScore(highScore); // Firebase-д оноо хадгалах
+}
+
+function changeSkin(skinId) {
+  balloonImg.src = `assets/${skinId}.gif`;
+  balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height); // Шинэ skin-ийн pixel data-г шинэчлэх
+  tg.showAlert(`Skin changed to: ${skinId}`);
+  saveGameState();
+}
+
+function updateBalloon() {
+  if (!isPlaying) {
+    balloon.x = canvas.width / 2 - menuBalloonSize / 2;
+  }
+}
+
+function gameLoop(time) {
+  const deltaTime = lastTime ? (time - lastTime) / 1000 : 1/60;
+  lastTime = time;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (isPlaying) {
+    ctx.fillStyle = '#aee1f9';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  } else {
+    drawBackground(time, deltaTime);
+    drawClouds(deltaTime);
+  }
+  updateBalloon();
+  drawBalloon(time);
+  if (!isPlaying) {
+    drawCloudsFront(deltaTime);
+  }
+  drawObstacles(deltaTime);
+  drawScore();
+  requestAnimationFrame(gameLoop);
+}
+
 canvas.addEventListener('touchmove', function(e) {
   if (isPlaying) {
     e.preventDefault();
@@ -374,7 +333,7 @@ document.querySelectorAll('.menu-button').forEach(button => {
         document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
         document.getElementById(layerId).style.display = 'flex';
         if (layerId === 'tasks-layer') updateTaskList();
-        if (layerId === 'leaderboard-layer') updateLeaderboard();
+        if (layerId === 'leaderboard-layer') window.updateLeaderboard();
         if (layerId === 'wallet-layer') updateWallet();
       }
     }
@@ -437,7 +396,7 @@ function checkImagesLoaded() {
     balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
     obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8);
     updateTaskList();
-    updateLeaderboard();
+    window.updateLeaderboard();
     updateWallet();
     document.getElementById('vibration-toggle').checked = vibrationEnabled;
     document.getElementById('music-toggle').checked = musicEnabled;
@@ -478,6 +437,7 @@ tg.BackButton.onClick(() => {
 
 window.changeSkin = function(skinId) {
   balloonImg.src = `assets/${skinId}.gif`;
+  balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height); // Шинэ skin-ийн pixel data-г шинэчлэх
   tg.showAlert(`Skin changed to: ${skinId}`);
   saveGameState();
 };
