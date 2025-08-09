@@ -91,7 +91,7 @@ const offscreenCanvas = document.createElement('canvas');
 const offscreenCtx = offscreenCanvas.getContext('2d');
 
 function getPixelData(img, width, height) {
-  if (!offscreenCtx || !img) return new Uint8ClampedArray(0);
+  if (!offscreenCtx || !img || !img.complete) return new Uint8ClampedArray(0);
   offscreenCanvas.width = width;
   offscreenCanvas.height = height;
   offscreenCtx.clearRect(0, 0, width, height);
@@ -422,8 +422,6 @@ function checkImagesLoaded() {
     updateWallet();
     document.getElementById('vibration-toggle').checked = vibrationEnabled;
     gameLoop();
-  } else {
-    document.getElementById('loading-screen').textContent = `Loading... ${Math.floor((imagesLoaded / totalImages) * 100)}%`;
   }
 }
 
@@ -441,7 +439,7 @@ tg.BackButton.onClick(() => {
   bottomMenu.style.display = 'flex';
   shopButton.style.display = 'block';
   settingsButton.style.display = 'block';
-  document.getElementById('shop-button-glow').style.display = 'block');
+  document.getElementById('shop-button-glow').style.display = 'block';
 });
 
 window.changeSkin = function(skinId) {
