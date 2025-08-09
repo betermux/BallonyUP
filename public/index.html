@@ -2,46 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Balloon Game</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style>
+    #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #fff; display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    canvas { display: block; }
+    #bottom-menu { position: fixed; bottom: 0; width: 100%; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: space-around; padding: 10px 0; }
+    .menu-button { width: 60px; height: 60px; background-size: contain; background-repeat: no-repeat; }
+    .menu-layer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; flex-direction: column; color: #fff; }
+    #back-button { position: absolute; top: 10px; left: 10px; padding: 10px; background: #333; color: #fff; border: none; }
+    #shop-button-glow { box-shadow: 0 0 10px #00ff00; }
+  </style>
 </head>
 <body>
-  <div id="loading-screen" class="loading-screen">
-    <div>Loading...</div>
-  </div>
+  <div id="loading-screen">Loading...</div>
   <canvas id="gameCanvas"></canvas>
-  <button id="back-button">Back to Menu</button>
-  <div class="score-display">
-    <img src="assets/coin.png" alt="Coin">
-    <span id="score-display-top">0</span>
+  <div id="bottom-menu">
+    <button id="play-button" class="menu-button" data-layer="play-layer" style="background-image: url('assets/play.png'); width: 80px; height: 80px;"></button>
+    <button id="skins-button" class="menu-button" data-layer="skins-layer" style="background-image: url('assets/skins.png');"></button>
+    <button id="tasks-button" class="menu-button" data-layer="tasks-layer" style="background-image: url('assets/tasks.png');"></button>
+    <button id="leaderboard-button" class="menu-button" data-layer="leaderboard-layer" style="background-image: url('assets/leaderboard.png');"></button>
+    <button id="wallet-button" class="menu-button" data-layer="wallet-layer" style="background-image: url('assets/wallet.png');"></button>
   </div>
-  <img id="shop-button-glow" src="assets/glow.gif" alt="Glow">
-  <img id="shop-button" src="assets/shop.png" alt="Shop">
-  <img id="settings-button" src="assets/settings.png" alt="Settings">
-  <div class="bottom-menu" id="bottom-menu">
-    <div class="menu-button skins" data-layer="skins-layer"><img src="assets/skins.png" alt="Skins"></div>
-    <div class="menu-button" data-layer="tasks-layer"><img src="assets/tasks.png" alt="Tasks"></div>
-    <div class="menu-button play" data-layer="play-layer"><img src="assets/play.png" alt="Play"></div>
-    <div class="menu-button" data-layer="leaderboard-layer"><img src="assets/leaderboard.png" alt="Leaderboard"></div>
-    <div class="menu-button wallet" data-layer="wallet-layer"><img src="assets/wallet.png" alt="Wallet"></div>
-  </div>
-  <div id="skins-layer" class="menu-layer">
+  <button id="back-button" style="display: none;">Back</button>
+  <div id="shop-button-glow"></div>
+  <div id="play-layer" class="menu-layer">
     <div>
-      <h2>Balloon Skins</h2>
-      <button onclick="window.changeSkin('balloon_red')">Red Balloon</button>
-      <button onclick="window.changeSkin('balloon_blue')">Blue Balloon</button>
+      <h2>Play</h2>
+      <button class="menu-button play" data-layer="play-layer" style="background-image: url('assets/play.png'); width: 80px; height: 80px;"></button>
       <button class="back-button">Back</button>
     </div>
   </div>
-  <div id="wallet-layer" class="menu-layer">
+  <div id="skins-layer" class="menu-layer">
     <div>
-      <h2>Wallet</h2>
-      <p>Your Score: <span id="score-display">0</span></p>
-      <p>Your High Score: <span id="high-score-display">0</span></p>
-      <p>Your Tokens: <span id="tokens-display">0</span></p>
+      <h2>Skins</h2>
+      <button onclick="changeSkin('balloon')">Default</button>
+      <button onclick="changeSkin('red')">Red</button>
+      <button onclick="changeSkin('blue')">Blue</button>
+      <button onclick="changeSkin('silent')">Silent</button>
       <button class="back-button">Back</button>
     </div>
   </div>
@@ -52,137 +51,78 @@
       <button class="back-button">Back</button>
     </div>
   </div>
-  <div id="play-layer" class="menu-layer">Play Menu (Start Game)<button class="back-button">Back</button></div>
   <div id="leaderboard-layer" class="menu-layer">
     <div>
       <h2>Leaderboard</h2>
-      <ul id="leaderboard"></ul>
+      <div id="leaderboard-list"></div>
+      <button class="back-button">Back</button>
+    </div>
+  </div>
+  <div id="wallet-layer" class="menu-layer">
+    <div>
+      <h2>Wallet</h2>
+      <p>Score: <span id="score-display">0</span></p>
+      <p>High Score: <span id="high-score-display">0</span></p>
+      <p>Tokens: <span id="token-display">0</span></p>
       <button class="back-button">Back</button>
     </div>
   </div>
   <div id="shop-layer" class="menu-layer">
     <div>
       <h2>Shop</h2>
-      <p>Buy skins and items here!</p>
       <button class="back-button">Back</button>
     </div>
   </div>
-<div id="settings-layer" class="menu-layer">
-  <div>
-    <h2>Settings</h2>
-    <label><input type="checkbox" id="vibration-toggle" checked> Vibration & Haptics</label><br>
-    <button class="back-button">Back</button>
+  <div id="settings-layer" class="menu-layer">
+    <div>
+      <h2>Settings</h2>
+      <label><input type="checkbox" id="vibration-toggle" checked> Vibration & Haptics</label><br>
+      <button class="back-button">Back</button>
+    </div>
   </div>
-</div>
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js';
-    import { getDatabase, ref, set, get, update } from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js';
-
+  <div id="score-display-top" style="position: fixed; top: 10px; left: 10px; color: #fff; font-family: 'Press Start 2P', monospace;">0</div>
+  <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-database.js"></script>
+  <script>
+    // Firebase config (replace with your own)
     const firebaseConfig = {
-      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-      measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+      apiKey: "your-api-key",
+      authDomain: "your-auth-domain",
+      databaseURL: "your-database-url",
+      projectId: "your-project-id",
+      storageBucket: "your-storage-bucket",
+      messagingSenderId: "your-messaging-sender-id",
+      appId: "your-app-id"
     };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    // Telegram Web App-аас userId авах
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id.toString() : 'guest';
-
-    // Оноо хадгалах
-    window.saveScore = async function(score) {
-      try {
-        await update(ref(db, 'users/' + userId), {
-          username: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.username || 'Unknown' : 'Unknown',
-          score,
-          lastPlayed: new Date().toISOString(),
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    window.saveScore = function(score) {
+      database.ref('scores/' + userId).set({ score: score });
+    };
+    window.getUserData = function() {
+      database.ref('users/' + userId).once('value').then((snapshot) => {
+        const data = snapshot.val();
+        document.getElementById('token-display').textContent = data ? data.tokens || 0 : 0;
+      });
+    };
+    window.addTokens = function(amount) {
+      database.ref('users/' + userId).once('value').then((snapshot) => {
+        const data = snapshot.val() || { tokens: 0 };
+        data.tokens = (data.tokens || 0) + amount;
+        database.ref('users/' + userId).set(data);
+        document.getElementById('token-display').textContent = data.tokens;
+      });
+    };
+    window.updateLeaderboard = function() {
+      database.ref('scores').orderByChild('score').limitToLast(10).once('value', (snapshot) => {
+        const scores = [];
+        snapshot.forEach((childSnapshot) => {
+          scores.unshift({ id: childSnapshot.key, score: childSnapshot.val().score });
         });
-        document.getElementById('score-display').textContent = Math.floor(score);
-        document.getElementById('high-score-display').textContent = Math.floor(score);
-        tg.showAlert('Оноо хадгалагдлаа!');
-      } catch (error) {
-        tg.showAlert('Алдаа: ' + error.message);
-      }
+        const leaderboardList = document.getElementById('leaderboard-list');
+        leaderboardList.innerHTML = scores.map(s => `<div>${s.id}: ${s.score}</div>`).join('');
+      });
     };
-
-    // Токен нэмэх
-    window.addTokens = async function(tokens) {
-      try {
-        const snapshot = await get(ref(db, 'users/' + userId));
-        const currentTokens = snapshot.exists() ? snapshot.val().tokens || 0 : 0;
-        await update(ref(db, 'users/' + userId), {
-          username: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.username || 'Unknown' : 'Unknown',
-          tokens: currentTokens + tokens,
-          lastPlayed: new Date().toISOString(),
-        });
-        await set(ref(db, 'transactions/' + Date.now()), {
-          userId,
-          amount: tokens,
-          type: 'earned',
-          timestamp: new Date().toISOString(),
-        });
-        document.getElementById('tokens-display').textContent = currentTokens + tokens;
-        tg.showAlert(`${tokens} токен нэмэгдлээ!`);
-      } catch (error) {
-        tg.showAlert('Алдаа: ' + error.message);
-      }
-    };
-
-    // Оноо, токен авах
-    window.getUserData = async function() {
-      try {
-        const snapshot = await get(ref(db, 'users/' + userId));
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          document.getElementById('score-display').textContent = Math.floor(data.score || 0);
-          document.getElementById('high-score-display').textContent = Math.floor(data.score || 0);
-          document.getElementById('tokens-display').textContent = data.tokens || 0;
-        }
-      } catch (error) {
-        tg.showAlert('Алдаа: ' + error.message);
-      }
-    };
-
-    // Leaderboard шинэчлэх
-    window.updateLeaderboard = async function() {
-      try {
-        const snapshot = await get(ref(db, 'users')).then(snapshot => {
-          let leaderboardData = [];
-          snapshot.forEach(child => {
-            const data = child.val();
-            leaderboardData.push({ username: data.username, score: data.score || 0 });
-          });
-          return leaderboardData.sort((a, b) => b.score - a.score).slice(0, 10);
-        });
-        const leaderboard = document.getElementById('leaderboard');
-        leaderboard.innerHTML = '';
-        if (leaderboardData.length === 0) {
-          const li = document.createElement('li');
-          li.textContent = 'No leaderboard data available';
-          leaderboard.appendChild(li);
-        } else {
-          leaderboardData.forEach((data, index) => {
-            const li = document.createElement('li');
-            li.textContent = `${index + 1}. @${data.username}: ${Math.floor(data.score)} coins`;
-            leaderboard.appendChild(li);
-          });
-        }
-      } catch (error) {
-        tg.showAlert('Error fetching leaderboard: ' + error.message);
-      }
-    };
-
-    // Эхэндээ хэрэглэгчийн өгөгдлийг ачаалах
-    window.getUserData();
   </script>
   <script src="game.js"></script>
 </body>
