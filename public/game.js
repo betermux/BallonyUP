@@ -17,26 +17,28 @@ const backButton = document.getElementById('back-button');
 const shopButton = document.getElementById('shop-button');
 const settingsButton = document.getElementById('settings-button');
 
-const bgImg = new Image();
-bgImg.src = 'assets/bg.png';
-const balloonImg = new Image();
-balloonImg.src = 'assets/balloon.gif';
-const obstacleImg = new Image();
-obstacleImg.src = 'assets/obstacle.png';
-const coinImg = new Image();
-coinImg.src = 'assets/coin.png';
-const cloudImg = new Image();
-cloudImg.src = 'assets/cloud.png';
-const cloud1Img = new Image();
-cloud1Img.src = 'assets/cloud1.png';
-const cloud2Img = new Image();
-cloud2Img.src = 'assets/cloud2.png';
-const shopImg = new Image();
-shopImg.src = 'assets/shop.png';
-const settingsImg = new Image();
-settingsImg.src = 'assets/settings.png';
-const bgMenuImg = new Image();
-bgMenuImg.src = 'assets/bgmenu.png';
+const images = {
+  bgImg: new Image(),
+  balloonImg: new Image(),
+  obstacleImg: new Image(),
+  coinImg: new Image(),
+  cloudImg: new Image(),
+  cloud1Img: new Image(),
+  cloud2Img: new Image(),
+  shopImg: new Image(),
+  settingsImg: new Image(),
+  bgMenuImg: new Image()
+};
+images.bgImg.src = 'assets/bg.png';
+images.balloonImg.src = 'assets/balloon.gif';
+images.obstacleImg.src = 'assets/obstacle.png';
+images.coinImg.src = 'assets/coin.png';
+images.cloudImg.src = 'assets/cloud.png';
+images.cloud1Img.src = 'assets/cloud1.png';
+images.cloud2Img.src = 'assets/cloud2.png';
+images.shopImg.src = 'assets/shop.png';
+images.settingsImg.src = 'assets/settings.png';
+images.bgMenuImg.src = 'assets/bgmenu.png';
 
 function resizeCanvas() {
   if (canvas) {
@@ -68,7 +70,7 @@ const bgSpeed = 25;
 let clouds = [];
 for (let i = 0; i < 9; i++) {
   clouds.push({
-    img: i % 3 === 0 ? cloudImg : (i % 3 === 1 ? cloud1Img : cloud2Img),
+    img: i % 3 === 0 ? images.cloudImg : (i % 3 === 1 ? images.cloud1Img : images.cloud2Img),
     x: Math.random() * (canvas ? canvas.width : 1000),
     y: Math.random() * (canvas ? canvas.height / 2 : 500),
     size: 75 + Math.random() * 150,
@@ -80,7 +82,7 @@ for (let i = 0; i < 9; i++) {
 let tasks = [
   { id: 'score_1000', description: 'Score 1000 points', reward: 'Unlock Red Skin', completed: false },
   { id: 'play_3_times', description: 'Play 3 times', reward: 'Unlock Blue Skin', progress: playCount, target: 3, completed: false },
-  { id: 'no_music_challenge', description: 'Complete game without music', reward: 'Unlock Silent Skin', completed: true } // Auto-completed since no music
+  { id: 'no_music_challenge', description: 'Complete game without music', reward: 'Unlock Silent Skin', completed: true }
 ];
 
 const menuBalloonSize = 384;
@@ -120,11 +122,11 @@ function checkPixelCollision(x1, y1, w1, h1, pixelData1, x2, y2, w2, h2, pixelDa
 }
 
 function drawBackground(time, deltaTime) {
-  if (!isPlaying && canvas && ctx) {
+  if (!isPlaying && canvas && ctx && images.bgImg.complete) {
     bgX -= bgSpeed * deltaTime;
     if (bgX <= -canvas.width) bgX += canvas.width;
-    ctx.drawImage(bgImg, bgX, 0, canvas.width, canvas.height);
-    ctx.drawImage(bgImg, bgX + canvas.width, 0, canvas.width, canvas.height);
+    ctx.drawImage(images.bgImg, bgX, 0, canvas.width, canvas.height);
+    ctx.drawImage(images.bgImg, bgX + canvas.width, 0, canvas.width, canvas.height);
   }
 }
 
@@ -136,33 +138,33 @@ function drawClouds(deltaTime) {
         cloud.x = canvas.width;
         cloud.y = Math.random() * canvas.height / 2;
       }
-      if (cloud.zIndex === 'back') ctx.drawImage(cloud.img, cloud.x, cloud.y, cloud.size, cloud.size);
+      if (cloud.zIndex === 'back' && cloud.img.complete) ctx.drawImage(cloud.img, cloud.x, cloud.y, cloud.size, cloud.size);
     });
   }
 }
 
 function drawBalloon(time) {
-  if (!isPlaying && canvas && ctx) {
+  if (!isPlaying && canvas && ctx && images.balloonImg.complete) {
     balloonY = canvas.height / 2 + Math.sin(time * balloonFrequency) * balloonAmplitude;
-    ctx.drawImage(balloonImg, canvas.width / 2 - menuBalloonSize / 2, balloonY - menuBalloonSize / 2, menuBalloonSize, menuBalloonSize);
-  } else if (isPlaying && canvas && ctx) {
-    ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
+    ctx.drawImage(images.balloonImg, canvas.width / 2 - menuBalloonSize / 2, balloonY - menuBalloonSize / 2, menuBalloonSize, menuBalloonSize);
+  } else if (isPlaying && canvas && ctx && images.balloonImg.complete) {
+    ctx.drawImage(images.balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
   }
 }
 
 function drawCloudsFront(deltaTime) {
   if (!isPlaying && canvas && ctx) {
     clouds.forEach(cloud => {
-      if (cloud.zIndex === 'front') ctx.drawImage(cloud.img, cloud.x, cloud.y, cloud.size, cloud.size);
+      if (cloud.zIndex === 'front' && cloud.img.complete) ctx.drawImage(cloud.img, cloud.x, cloud.y, cloud.size, cloud.size);
     });
   }
 }
 
 function drawObstacles(deltaTime) {
-  if (!isPlaying || !canvas || !ctx) return;
+  if (!isPlaying || !canvas || !ctx || !images.obstacleImg.complete) return;
   for (let obs of obstacles) {
     obs.y += speed * deltaTime * 60;
-    ctx.drawImage(obstacleImg, obs.x, obs.y, obs.width, obs.height);
+    ctx.drawImage(images.obstacleImg, obs.x, obs.y, obs.width, obs.height);
     if (
       checkPixelCollision(
         balloon.x, balloon.y, balloon.width, balloon.height, balloonPixelData,
@@ -178,8 +180,8 @@ function drawObstacles(deltaTime) {
       isPlaying = false;
       updateTasks();
       saveGameState();
-      window.saveScore(highScore); // Firebase-д оноо хадгалах
-      if (score >= 1000) window.addTokens(10); // Жишээ: 1000 оноонд 10 токен
+      window.saveScore(highScore);
+      if (score >= 1000) window.addTokens(10);
       checkNoMusicChallenge();
     }
   }
@@ -187,19 +189,19 @@ function drawObstacles(deltaTime) {
 }
 
 function drawScore() {
-  if (canvas && ctx) {
+  if (canvas && ctx && images.coinImg.complete) {
     document.getElementById('score-display-top').textContent = Math.floor(highScore);
     if (isPlaying) {
       ctx.fillStyle = 'black';
       ctx.font = '16px "Press Start 2P"';
-      ctx.drawImage(coinImg, 10, 10, 24, 24);
+      ctx.drawImage(images.coinImg, 10, 10, 24, 24);
       ctx.fillText(`${Math.floor(score)} | High Score: ${Math.floor(highScore)}`, 40, 30);
       score += 1 / 60;
       if (score > highScore) {
         highScore = score;
         localStorage.setItem(`highScore_${userId}`, highScore);
         document.getElementById('score-display-top').textContent = Math.floor(highScore);
-        window.saveScore(highScore); // Firebase-д оноо хадгалах
+        window.saveScore(highScore);
       }
     }
     updateWallet();
@@ -209,7 +211,7 @@ function drawScore() {
 function updateWallet() {
   document.getElementById('score-display').textContent = Math.floor(score);
   document.getElementById('high-score-display').textContent = Math.floor(highScore);
-  window.getUserData(); // Firebase-ээс токеныг шинэчлэх
+  window.getUserData();
 }
 
 function updateTasks() {
@@ -217,7 +219,7 @@ function updateTasks() {
     tasks.forEach(task => {
       if (task.id === 'score_1000' && score >= 1000 && !task.completed) {
         task.completed = true;
-        window.addTokens(10); // Токен нэмэх
+        window.addTokens(10);
         tg.showAlert(`Task completed: ${task.description}! Reward: ${task.reward}`);
       }
       if (task.id === 'play_3_times' && !task.completed) {
@@ -225,7 +227,7 @@ function updateTasks() {
         task.progress = playCount;
         if (task.progress >= task.target) {
           task.completed = true;
-          window.addTokens(5); // Токен нэмэх
+          window.addTokens(5);
           tg.showAlert(`Task completed: ${task.description}! Reward: ${task.reward}`);
         }
       }
@@ -241,7 +243,7 @@ function checkNoMusicChallenge() {
     const noMusicTask = tasks.find(task => task.id === 'no_music_challenge');
     if (!noMusicTask.completed && gameOver) {
       noMusicTask.completed = true;
-      window.addTokens(5); // Токен нэмэх
+      window.addTokens(5);
       tg.showAlert(`Challenge Completed: ${noMusicTask.description}! Reward: ${noMusicTask.reward}`);
       updateTaskList();
       saveGameState();
@@ -279,7 +281,7 @@ function resetGame() {
   spawnInterval = setInterval(spawnObstacle, 1500);
   updateTasks();
   saveGameState();
-  gameLoop(); // Alert-ийг хасч, дуу тоглоох боломжгүй болгосон
+  gameLoop();
 }
 
 function spawnObstacle() {
@@ -294,13 +296,13 @@ function saveGameState() {
   localStorage.setItem(`playCount_${userId}`, playCount);
   if (tasks) localStorage.setItem(`tasks_${userId}`, JSON.stringify(tasks));
   localStorage.setItem(`vibrationEnabled_${userId}`, vibrationEnabled);
-  window.saveScore(highScore); // Firebase-д оноо хадгалах
+  window.saveScore(highScore);
 }
 
 function changeSkin(skinId) {
-  if (balloonImg) {
-    balloonImg.src = `assets/${skinId}.gif`;
-    balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
+  if (images.balloonImg) {
+    images.balloonImg.src = `assets/${skinId}.gif`;
+    balloonPixelData = getPixelData(images.balloonImg, balloon.width, balloon.height);
     tg.showAlert(`Skin changed to: ${skinId}`);
     saveGameState();
   }
@@ -403,14 +405,15 @@ document.getElementById('vibration-toggle').addEventListener('change', (e) => {
 let imagesLoaded = 0;
 function checkImagesLoaded() {
   imagesLoaded++;
-  if (imagesLoaded === 9) {
+  const totalImages = Object.keys(images).length;
+  if (imagesLoaded === totalImages) {
     if (!canvas || !ctx) {
       alert('Error: Canvas or context not available. Check your setup.');
       return;
     }
     document.getElementById('loading-screen').style.display = 'none';
-    balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
-    obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8);
+    balloonPixelData = getPixelData(images.balloonImg, balloon.width, balloon.height);
+    obstaclePixelData = getPixelData(images.obstacleImg, 76.8, 76.8);
     if (!balloonPixelData || !obstaclePixelData) {
       console.warn('Pixel data failed to load for balloon or obstacle.');
     }
@@ -419,28 +422,18 @@ function checkImagesLoaded() {
     updateWallet();
     document.getElementById('vibration-toggle').checked = vibrationEnabled;
     gameLoop();
+  } else {
+    document.getElementById('loading-screen').textContent = `Loading... ${Math.floor((imagesLoaded / totalImages) * 100)}%`;
   }
 }
-bgImg.onload = checkImagesLoaded;
-balloonImg.onload = checkImagesLoaded;
-obstacleImg.onload = checkImagesLoaded;
-coinImg.onload = checkImagesLoaded;
-cloudImg.onload = checkImagesLoaded;
-cloud1Img.onload = checkImagesLoaded;
-cloud2Img.onload = checkImagesLoaded;
-shopImg.onload = checkImagesLoaded;
-settingsImg.onload = checkImagesLoaded;
-bgMenuImg.onload = checkImagesLoaded;
-bgImg.onerror = () => tg.showAlert('Failed to load background image');
-balloonImg.onerror = () => tg.showAlert('Failed to load balloon image');
-obstacleImg.onerror = () => tg.showAlert('Failed to load obstacle image');
-coinImg.onerror = () => tg.showAlert('Failed to load coin image');
-cloudImg.onerror = () => tg.showAlert('Failed to load cloud image');
-cloud1Img.onerror = () => tg.showAlert('Failed to load cloud1 image');
-cloud2Img.onerror = () => tg.showAlert('Failed to load cloud2 image');
-shopImg.onerror = () => tg.showAlert('Failed to load shop image');
-settingsImg.onerror = () => tg.showAlert('Failed to load settings image');
-bgMenuImg.onerror = () => tg.showAlert('Failed to load menu background image');
+
+Object.values(images).forEach(img => {
+  img.onload = checkImagesLoaded;
+  img.onerror = () => {
+    console.error(`Failed to load image: ${img.src}`);
+    checkImagesLoaded(); // Алдаатай ч гэсэн дараачийн алхам руу шилжих
+  };
+});
 
 tg.BackButton.onClick(() => {
   if (vibrationEnabled) tg.HapticFeedback.impactOccurred('medium');
@@ -452,9 +445,9 @@ tg.BackButton.onClick(() => {
 });
 
 window.changeSkin = function(skinId) {
-  if (balloonImg) {
-    balloonImg.src = `assets/${skinId}.gif`;
-    balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
+  if (images.balloonImg) {
+    images.balloonImg.src = `assets/${skinId}.gif`;
+    balloonPixelData = getPixelData(images.balloonImg, balloon.width, balloon.height);
     tg.showAlert(`Skin changed to: ${skinId}`);
     saveGameState();
   }
