@@ -30,9 +30,6 @@ settingsImg.src = 'assets/settings.png';
 const bgMenuImg = new Image();
 bgMenuImg.src = 'assets/bgmenu.png';
 
-const bgMusic = new Audio('assets/bg.mp3');
-bgMusic.loop = true;
-
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -51,7 +48,6 @@ let spawnInterval;
 let isPlaying = false;
 let playCount = localStorage.getItem(`playCount_${userId}`) ? parseInt(localStorage.getItem(`playCount_${userId}`)) : 0;
 let vibrationEnabled = localStorage.getItem(`vibrationEnabled_${userId}`) !== 'false';
-let musicEnabled = localStorage.getItem(`musicEnabled_${userId}`) !== 'false';
 
 let balloonY = canvas.height / 2;
 const balloonAmplitude = 10;
@@ -270,7 +266,6 @@ function saveGameState() {
   localStorage.setItem(`playCount_${userId}`, playCount);
   localStorage.setItem(`tasks_${userId}`, JSON.stringify(tasks));
   localStorage.setItem(`vibrationEnabled_${userId}`, vibrationEnabled);
-  localStorage.setItem(`musicEnabled_${userId}`, musicEnabled);
   window.saveScore(highScore); // Firebase-д оноо хадгалах
 }
 
@@ -378,20 +373,10 @@ document.getElementById('vibration-toggle').addEventListener('change', (e) => {
   localStorage.setItem(`vibrationEnabled_${userId}`, vibrationEnabled);
 });
 
-document.getElementById('music-toggle').addEventListener('change', (e) => {
-  musicEnabled = e.target.checked;
-  localStorage.setItem(`musicEnabled_${userId}`, musicEnabled);
-  if (musicEnabled) {
-    bgMusic.play();
-  } else {
-    bgMusic.pause();
-  }
-});
-
 let imagesLoaded = 0;
 function checkImagesLoaded() {
   imagesLoaded++;
-  if (imagesLoaded === 10 && bgMusic.readyState >= 2) {
+  if (imagesLoaded === 10) { // bgMusic-ийг хасаад 10 болгосон
     document.getElementById('loading-screen').style.display = 'none';
     balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
     obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8);
@@ -399,8 +384,6 @@ function checkImagesLoaded() {
     window.updateLeaderboard();
     updateWallet();
     document.getElementById('vibration-toggle').checked = vibrationEnabled;
-    document.getElementById('music-toggle').checked = musicEnabled;
-    if (musicEnabled) bgMusic.play();
     gameLoop();
   }
 }
@@ -424,7 +407,6 @@ cloud2Img.onerror = () => tg.showAlert('Failed to load cloud2 image');
 shopImg.onerror = () => tg.showAlert('Failed to load shop image');
 settingsImg.onerror = () => tg.showAlert('Failed to load settings image');
 bgMenuImg.onerror = () => tg.showAlert('Failed to load menu background image');
-bgMusic.onerror = () => tg.showAlert('Failed to load background music');
 
 tg.BackButton.onClick(() => {
   if (vibrationEnabled) tg.HapticFeedback.impactOccurred('medium');
