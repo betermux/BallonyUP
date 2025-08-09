@@ -3,7 +3,15 @@ tg.ready();
 const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id.toString() : 'guest';
 
 const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+if (!canvas) {
+  console.error('Canvas element not found!');
+  alert('Error: Game canvas is missing. Check index.html.');
+}
+const ctx = canvas ? canvas.getContext('2d') : null;
+if (!ctx) {
+  console.error('Canvas context not available!');
+  alert('Error: Unable to get canvas context.');
+}
 const bottomMenu = document.getElementById('bottom-menu');
 const backButton = document.getElementById('back-button');
 const shopButton = document.getElementById('shop-button');
@@ -31,13 +39,15 @@ const bgMenuImg = new Image();
 bgMenuImg.src = 'assets/bgmenu.png';
 
 function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  if (canvas) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-let balloon = { x: canvas.width / 2 - 64, y: canvas.height / 2, width: 128, height: 128 };
+let balloon = { x: canvas ? canvas.width / 2 - 64 : 0, y: canvas ? canvas.height / 2 : 0, width: 128, height: 128 };
 let obstacles = [];
 let speed = 2;
 let gameOver = false;
@@ -49,7 +59,7 @@ let isPlaying = false;
 let playCount = localStorage.getItem(`playCount_${userId}`) ? parseInt(localStorage.getItem(`playCount_${userId}`)) : 0;
 let vibrationEnabled = localStorage.getItem(`vibrationEnabled_${userId}`) !== 'false';
 
-let balloonY = canvas.height / 2;
+let balloonY = canvas ? canvas.height / 2 : 0;
 const balloonAmplitude = 10;
 const balloonFrequency = 0.002;
 let bgX = 0;
@@ -59,8 +69,8 @@ let clouds = [];
 for (let i = 0; i < 9; i++) {
   clouds.push({
     img: i % 3 === 0 ? cloudImg : (i % 3 === 1 ? cloud1Img : cloud2Img),
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height / 2,
+    x: Math.random() * (canvas ? canvas.width : 1000),
+    y: Math.random() * (canvas ? canvas.height / 2 : 500),
     size: 75 + Math.random() * 150,
     speed: 10 + Math.random() * 20,
     zIndex: Math.random() < 0.5 ? 'front' : 'back'
@@ -79,6 +89,7 @@ const offscreenCanvas = document.createElement('canvas');
 const offscreenCtx = offscreenCanvas.getContext('2d');
 
 function getPixelData(img, width, height) {
+  if (!offscreenCtx || !img) return new Uint8ClampedArray(0);
   offscreenCanvas.width = width;
   offscreenCanvas.height = height;
   offscreenCtx.clearRect(0, 0, width, height);
@@ -87,7 +98,7 @@ function getPixelData(img, width, height) {
 }
 
 function checkPixelCollision(x1, y1, w1, h1, pixelData1, x2, y2, w2, h2, pixelData2) {
-  if (x1 + w1 < x2 || x2 + w2 < x1 || y1 + h1 < y2 || y2 + h2 < y1) return false;
+  if (!pixelData1 || !pixelData2 || x1 + w1 < x2 || x2 + w2 < x1 || y1 + h1 < y2 || y2 + h2 < y1) return false;
   const xMin = Math.max(x1, x2);
   const xMax = Math.min(x1 + w1, x2 + w2);
   const yMin = Math.max(y1, y2);
@@ -100,7 +111,7 @@ function checkPixelCollision(x1, y1, w1, h1, pixelData1, x2, y2, w2, h2, pixelDa
       const py2 = Math.floor(y - y2);
       const index1 = (py1 * w1 + px1) * 4 + 3;
       const index2 = (py2 * w2 + px2) * 4 + 3;
-      if (pixelData1[index1] > 0 && pixelData2[index2] > 0) {
+      if (index1 < pixelData1.length && index2 < pixelData2.length && pixelData1[index1] > 0 && pixelData2[index2] > 0) {
         return true;
       }
     }
@@ -109,52 +120,46 @@ function checkPixelCollision(x1, y1, w1, h1, pixelData1, x2, y2, w2, h2, pixelDa
 }
 
 function drawBackground(time, deltaTime) {
-  if (!isPlaying) {
+  if (!isPlaying && canvas && ctx) {
     bgX -= bgSpeed * deltaTime;
-    if (bgX <= -canvas.width) {
-      bgX += canvas.width;
-    }
+    if (bgX <= -canvas.width) bgX += canvas.width;
     ctx.drawImage(bgImg, bgX, 0, canvas.width, canvas.height);
     ctx.drawImage(bgImg, bgX + canvas.width, 0, canvas.width, canvas.height);
   }
 }
 
 function drawClouds(deltaTime) {
-  if (!isPlaying) {
+  if (!isPlaying && canvas && ctx) {
     clouds.forEach(cloud => {
       cloud.x -= cloud.speed * deltaTime;
       if (cloud.x <= -cloud.size) {
         cloud.x = canvas.width;
         cloud.y = Math.random() * canvas.height / 2;
       }
-      if (cloud.zIndex === 'back') {
-        ctx.drawImage(cloud.img, cloud.x, cloud.y, cloud.size, cloud.size);
-      }
+      if (cloud.zIndex === 'back') ctx.drawImage(cloud.img, cloud.x, cloud.y, cloud.size, cloud.size);
     });
   }
 }
 
 function drawBalloon(time) {
-  if (!isPlaying) {
+  if (!isPlaying && canvas && ctx) {
     balloonY = canvas.height / 2 + Math.sin(time * balloonFrequency) * balloonAmplitude;
     ctx.drawImage(balloonImg, canvas.width / 2 - menuBalloonSize / 2, balloonY - menuBalloonSize / 2, menuBalloonSize, menuBalloonSize);
-  } else {
+  } else if (isPlaying && canvas && ctx) {
     ctx.drawImage(balloonImg, balloon.x, balloon.y, balloon.width, balloon.height);
   }
 }
 
 function drawCloudsFront(deltaTime) {
-  if (!isPlaying) {
+  if (!isPlaying && canvas && ctx) {
     clouds.forEach(cloud => {
-      if (cloud.zIndex === 'front') {
-        ctx.drawImage(cloud.img, cloud.x, cloud.y, cloud.size, cloud.size);
-      }
+      if (cloud.zIndex === 'front') ctx.drawImage(cloud.img, cloud.x, cloud.y, cloud.size, cloud.size);
     });
   }
 }
 
 function drawObstacles(deltaTime) {
-  if (!isPlaying) return;
+  if (!isPlaying || !canvas || !ctx) return;
   for (let obs of obstacles) {
     obs.y += speed * deltaTime * 60;
     ctx.drawImage(obstacleImg, obs.x, obs.y, obs.width, obs.height);
@@ -182,21 +187,23 @@ function drawObstacles(deltaTime) {
 }
 
 function drawScore() {
-  document.getElementById('score-display-top').textContent = Math.floor(highScore);
-  if (isPlaying) {
-    ctx.fillStyle = 'black';
-    ctx.font = '16px "Press Start 2P"';
-    ctx.drawImage(coinImg, 10, 10, 24, 24);
-    ctx.fillText(`${Math.floor(score)} | High Score: ${Math.floor(highScore)}`, 40, 30);
-    score += 1 / 60;
-    if (score > highScore) {
-      highScore = score;
-      localStorage.setItem(`highScore_${userId}`, highScore);
-      document.getElementById('score-display-top').textContent = Math.floor(highScore);
-      window.saveScore(highScore); // Firebase-д оноо хадгалах
+  if (canvas && ctx) {
+    document.getElementById('score-display-top').textContent = Math.floor(highScore);
+    if (isPlaying) {
+      ctx.fillStyle = 'black';
+      ctx.font = '16px "Press Start 2P"';
+      ctx.drawImage(coinImg, 10, 10, 24, 24);
+      ctx.fillText(`${Math.floor(score)} | High Score: ${Math.floor(highScore)}`, 40, 30);
+      score += 1 / 60;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem(`highScore_${userId}`, highScore);
+        document.getElementById('score-display-top').textContent = Math.floor(highScore);
+        window.saveScore(highScore); // Firebase-д оноо хадгалах
+      }
     }
+    updateWallet();
   }
-  updateWallet();
 }
 
 function updateWallet() {
@@ -206,49 +213,56 @@ function updateWallet() {
 }
 
 function updateTasks() {
-  tasks.forEach(task => {
-    if (task.id === 'score_1000' && score >= 1000 && !task.completed) {
-      task.completed = true;
-      window.addTokens(10); // Токен нэмэх
-      tg.showAlert(`Task completed: ${task.description}! Reward: ${task.reward}`);
-    }
-    if (task.id === 'play_3_times' && !task.completed) {
-      playCount++;
-      task.progress = playCount;
-      if (task.progress >= task.target) {
+  if (tasks) {
+    tasks.forEach(task => {
+      if (task.id === 'score_1000' && score >= 1000 && !task.completed) {
         task.completed = true;
-        window.addTokens(5); // Токен нэмэх
+        window.addTokens(10); // Токен нэмэх
         tg.showAlert(`Task completed: ${task.description}! Reward: ${task.reward}`);
       }
-    }
-  });
-  localStorage.setItem(`playCount_${userId}`, playCount);
-  updateTaskList();
-  saveGameState();
-}
-
-function checkNoMusicChallenge() {
-  const noMusicTask = tasks.find(task => task.id === 'no_music_challenge');
-  if (!noMusicTask.completed && gameOver) {
-    noMusicTask.completed = true;
-    window.addTokens(5); // Токен нэмэх
-    tg.showAlert(`Challenge Completed: ${noMusicTask.description}! Reward: ${noMusicTask.reward}`);
+      if (task.id === 'play_3_times' && !task.completed) {
+        playCount++;
+        task.progress = playCount;
+        if (task.progress >= task.target) {
+          task.completed = true;
+          window.addTokens(5); // Токен нэмэх
+          tg.showAlert(`Task completed: ${task.description}! Reward: ${task.reward}`);
+        }
+      }
+    });
+    localStorage.setItem(`playCount_${userId}`, playCount);
     updateTaskList();
     saveGameState();
   }
 }
 
+function checkNoMusicChallenge() {
+  if (tasks) {
+    const noMusicTask = tasks.find(task => task.id === 'no_music_challenge');
+    if (!noMusicTask.completed && gameOver) {
+      noMusicTask.completed = true;
+      window.addTokens(5); // Токен нэмэх
+      tg.showAlert(`Challenge Completed: ${noMusicTask.description}! Reward: ${noMusicTask.reward}`);
+      updateTaskList();
+      saveGameState();
+    }
+  }
+}
+
 function updateTaskList() {
   const taskList = document.getElementById('task-list');
-  taskList.innerHTML = '';
-  tasks.forEach(task => {
-    const li = document.createElement('li');
-    li.textContent = `${task.description} - ${task.completed ? 'Completed' : `Progress: ${task.progress || 0}/${task.target || 1}`} (Reward: ${task.reward})`;
-    taskList.appendChild(li);
-  });
+  if (taskList && tasks) {
+    taskList.innerHTML = '';
+    tasks.forEach(task => {
+      const li = document.createElement('li');
+      li.textContent = `${task.description} - ${task.completed ? 'Completed' : `Progress: ${task.progress || 0}/${task.target || 1}`} (Reward: ${task.reward})`;
+      taskList.appendChild(li);
+    });
+  }
 }
 
 function resetGame() {
+  if (!canvas) return;
   gameOver = false;
   isPlaying = true;
   balloon.x = canvas.width / 2 - balloon.width / 2;
@@ -265,12 +279,12 @@ function resetGame() {
   spawnInterval = setInterval(spawnObstacle, 1500);
   updateTasks();
   saveGameState();
-  // Challenge мэдэгдэл
   tg.showAlert('Welcome to No Background Music Challenge! Play without music for a unique experience.');
   gameLoop();
 }
 
 function spawnObstacle() {
+  if (!canvas) return;
   const size = 76.8;
   const x = Math.random() * (canvas.width - size);
   obstacles.push({ x, y: -size, width: size, height: size });
@@ -279,25 +293,26 @@ function spawnObstacle() {
 function saveGameState() {
   localStorage.setItem(`highScore_${userId}`, highScore);
   localStorage.setItem(`playCount_${userId}`, playCount);
-  localStorage.setItem(`tasks_${userId}`, JSON.stringify(tasks));
+  if (tasks) localStorage.setItem(`tasks_${userId}`, JSON.stringify(tasks));
   localStorage.setItem(`vibrationEnabled_${userId}`, vibrationEnabled);
   window.saveScore(highScore); // Firebase-д оноо хадгалах
 }
 
 function changeSkin(skinId) {
-  balloonImg.src = `assets/${skinId}.gif`;
-  balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height); // Шинэ skin-ийн pixel data-г шинэчлэх
-  tg.showAlert(`Skin changed to: ${skinId}`);
-  saveGameState();
-}
-
-function updateBalloon() {
-  if (!isPlaying) {
-    balloon.x = canvas.width / 2 - menuBalloonSize / 2;
+  if (balloonImg) {
+    balloonImg.src = `assets/${skinId}.gif`;
+    balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
+    tg.showAlert(`Skin changed to: ${skinId}`);
+    saveGameState();
   }
 }
 
+function updateBalloon() {
+  if (!isPlaying && canvas) balloon.x = canvas.width / 2 - menuBalloonSize / 2;
+}
+
 function gameLoop(time) {
+  if (!canvas || !ctx) return;
   const deltaTime = lastTime ? (time - lastTime) / 1000 : 1/60;
   lastTime = time;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -310,16 +325,14 @@ function gameLoop(time) {
   }
   updateBalloon();
   drawBalloon(time);
-  if (!isPlaying) {
-    drawCloudsFront(deltaTime);
-  }
+  if (!isPlaying) drawCloudsFront(deltaTime);
   drawObstacles(deltaTime);
   drawScore();
   requestAnimationFrame(gameLoop);
 }
 
 canvas.addEventListener('touchmove', function(e) {
-  if (isPlaying) {
+  if (isPlaying && canvas) {
     e.preventDefault();
     let touch = e.touches[0];
     balloon.x = Math.max(10, Math.min(touch.clientX - balloon.width / 2, canvas.width - balloon.width - 10));
@@ -327,14 +340,14 @@ canvas.addEventListener('touchmove', function(e) {
 }, { passive: false });
 
 canvas.addEventListener('mousemove', function(e) {
-  if (isPlaying) {
+  if (isPlaying && canvas) {
     balloon.x = Math.max(10, Math.min(e.clientX - balloon.width / 2, canvas.width - balloon.width - 10));
   }
 });
 
 document.querySelectorAll('.menu-button').forEach(button => {
   button.addEventListener('click', () => {
-    if (!isPlaying) {
+    if (!isPlaying && canvas) {
       if (vibrationEnabled) tg.HapticFeedback.impactOccurred('medium');
       const layerId = button.dataset.layer;
       if (layerId === 'play-layer') {
@@ -351,7 +364,7 @@ document.querySelectorAll('.menu-button').forEach(button => {
 });
 
 shopButton.addEventListener('click', () => {
-  if (!isPlaying) {
+  if (!isPlaying && canvas) {
     if (vibrationEnabled) tg.HapticFeedback.impactOccurred('medium');
     document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
     document.getElementById('shop-layer').style.display = 'flex';
@@ -359,7 +372,7 @@ shopButton.addEventListener('click', () => {
 });
 
 settingsButton.addEventListener('click', () => {
-  if (!isPlaying) {
+  if (!isPlaying && canvas) {
     if (vibrationEnabled) tg.HapticFeedback.impactOccurred('medium');
     document.querySelectorAll('.menu-layer').forEach(layer => layer.style.display = 'none');
     document.getElementById('settings-layer').style.display = 'flex';
@@ -391,10 +404,17 @@ document.getElementById('vibration-toggle').addEventListener('change', (e) => {
 let imagesLoaded = 0;
 function checkImagesLoaded() {
   imagesLoaded++;
-  if (imagesLoaded === 9) { // Background music-ийг хасаад 9 болгосон
+  if (imagesLoaded === 9) {
+    if (!canvas || !ctx) {
+      alert('Error: Canvas or context not available. Check your setup.');
+      return;
+    }
     document.getElementById('loading-screen').style.display = 'none';
     balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
     obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8);
+    if (!balloonPixelData || !obstaclePixelData) {
+      console.warn('Pixel data failed to load for balloon or obstacle.');
+    }
     updateTaskList();
     window.updateLeaderboard();
     updateWallet();
@@ -433,8 +453,10 @@ tg.BackButton.onClick(() => {
 });
 
 window.changeSkin = function(skinId) {
-  balloonImg.src = `assets/${skinId}.gif`;
-  balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height); // Шинэ skin-ийн pixel data-г шинэчлэх
-  tg.showAlert(`Skin changed to: ${skinId}`);
-  saveGameState();
+  if (balloonImg) {
+    balloonImg.src = `assets/${skinId}.gif`;
+    balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
+    tg.showAlert(`Skin changed to: ${skinId}`);
+    saveGameState();
+  }
 };
