@@ -32,7 +32,7 @@ const bgMenuImg = new Image();
 bgMenuImg.src = 'assets/bgmenu.png';
 
 const bgMusic = new Audio('assets/bg.mp3');
-bgMusic.loop = true;
+bg.mp3.loop = true;
 
 function resizeCanvas() {
   canvas.width = window.innerWidth;
