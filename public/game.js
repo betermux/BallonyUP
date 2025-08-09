@@ -70,6 +70,7 @@ for (let i = 0; i < 9; i++) {
 let tasks = [
   { id: 'score_1000', description: 'Score 1000 points', reward: 'Unlock Red Skin', completed: false },
   { id: 'play_3_times', description: 'Play 3 times', reward: 'Unlock Blue Skin', progress: playCount, target: 3, completed: false },
+  { id: 'no_music_challenge', description: 'Complete game without music', reward: 'Unlock Silent Skin', completed: false }
 ];
 
 const menuBalloonSize = 384;
@@ -174,6 +175,7 @@ function drawObstacles(deltaTime) {
       saveGameState();
       window.saveScore(highScore); // Firebase-д оноо хадгалах
       if (score >= 1000) window.addTokens(10); // Жишээ: 1000 оноонд 10 токен
+      checkNoMusicChallenge();
     }
   }
   obstacles = obstacles.filter(obs => obs.y < canvas.height);
@@ -225,6 +227,17 @@ function updateTasks() {
   saveGameState();
 }
 
+function checkNoMusicChallenge() {
+  const noMusicTask = tasks.find(task => task.id === 'no_music_challenge');
+  if (!noMusicTask.completed && gameOver) {
+    noMusicTask.completed = true;
+    window.addTokens(5); // Токен нэмэх
+    tg.showAlert(`Challenge Completed: ${noMusicTask.description}! Reward: ${noMusicTask.reward}`);
+    updateTaskList();
+    saveGameState();
+  }
+}
+
 function updateTaskList() {
   const taskList = document.getElementById('task-list');
   taskList.innerHTML = '';
@@ -252,6 +265,8 @@ function resetGame() {
   spawnInterval = setInterval(spawnObstacle, 1500);
   updateTasks();
   saveGameState();
+  // Challenge мэдэгдэл
+  tg.showAlert('Welcome to No Background Music Challenge! Play without music for a unique experience.');
   gameLoop();
 }
 
@@ -376,7 +391,7 @@ document.getElementById('vibration-toggle').addEventListener('change', (e) => {
 let imagesLoaded = 0;
 function checkImagesLoaded() {
   imagesLoaded++;
-  if (imagesLoaded === 9) { // bgMusic-ийг хасаад 9 болгосон
+  if (imagesLoaded === 9) { // Background music-ийг хасаад 9 болгосон
     document.getElementById('loading-screen').style.display = 'none';
     balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
     obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8);
