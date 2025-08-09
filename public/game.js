@@ -52,7 +52,7 @@ let spawnInterval;
 let isPlaying = false;
 let playCount = localStorage.getItem(`playCount_${userId}`) ? parseInt(localStorage.getItem(`playCount_${userId}`)) : 0;
 let vibrationEnabled = localStorage.getItem(`vibrationEnabled_${userId}`) !== 'false';
-let musicEnabled = localStorage.getItem(`musicEnabled_${userId}`) !== 'true';
+let musicEnabled = localStorage.getItem(`musicEnabled_${userId}`) !== 'false';
 
 let balloonY = canvas.height / 2;
 const balloonAmplitude = 10;
