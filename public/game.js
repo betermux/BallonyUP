@@ -376,7 +376,7 @@ document.getElementById('vibration-toggle').addEventListener('change', (e) => {
 let imagesLoaded = 0;
 function checkImagesLoaded() {
   imagesLoaded++;
-  if (imagesLoaded === 10) { // bgMusic-ийг хасаад 10 болгосон
+  if (imagesLoaded === 9) { // bgMusic-ийг хасаад 9 болгосон
     document.getElementById('loading-screen').style.display = 'none';
     balloonPixelData = getPixelData(balloonImg, balloon.width, balloon.height);
     obstaclePixelData = getPixelData(obstacleImg, 76.8, 76.8);
@@ -414,7 +414,7 @@ tg.BackButton.onClick(() => {
   bottomMenu.style.display = 'flex';
   shopButton.style.display = 'block';
   settingsButton.style.display = 'block';
-  document.getElementById('shop-button-glow').style.display = 'block';
+  document.getElementById('shop-button-glow').style.display = 'block');
 });
 
 window.changeSkin = function(skinId) {
