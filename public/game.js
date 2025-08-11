@@ -82,7 +82,6 @@ for (let i = 0; i < 9; i++) {
 let tasks = [
   { id: 'score_1000', description: 'Score 1000 points', reward: 'Unlock Red Skin', completed: false },
   { id: 'play_3_times', description: 'Play 3 times', reward: 'Unlock Blue Skin', progress: playCount, target: 3, completed: false },
-  { id: 'no_music_challenge', description: 'Complete game without music', reward: 'Unlock Silent Skin', completed: true }
 ];
 
 const menuBalloonSize = 384;
@@ -182,7 +181,6 @@ function drawObstacles(deltaTime) {
       saveGameState();
       window.saveScore(highScore);
       if (score >= 1000) window.addTokens(10);
-      checkNoMusicChallenge();
     }
   }
   obstacles = obstacles.filter(obs => obs.y < canvas.height);
@@ -235,19 +233,6 @@ function updateTasks() {
     localStorage.setItem(`playCount_${userId}`, playCount);
     updateTaskList();
     saveGameState();
-  }
-}
-
-function checkNoMusicChallenge() {
-  if (tasks) {
-    const noMusicTask = tasks.find(task => task.id === 'no_music_challenge');
-    if (!noMusicTask.completed && gameOver) {
-      noMusicTask.completed = true;
-      window.addTokens(5);
-      tg.showAlert(`Challenge Completed: ${noMusicTask.description}! Reward: ${noMusicTask.reward}`);
-      updateTaskList();
-      saveGameState();
-    }
   }
 }
 
